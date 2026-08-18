@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mafia Web Game</title>
+  <!-- PeerJS for Direct WebRTC Cross-Device Connections -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --accent-red: #ef4444;
+      --accent-blue: #3b82f6;
+      --accent-green: #22c55e;
+      --accent-yellow: #eab308;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      border: 1px solid #334155;
+    }
+
+    h1, h2, h3 { text-align: center; margin-bottom: 1rem; }
+    .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: bold; }
+    .badge-red { background: var(--accent-red); color: white; }
+    .badge-blue { background: var(--accent-blue); color: white; }
+    .badge-green { background: var(--accent-green); color: white; }
+
+    .status-bar {
+      text-align: center;
+      font-size: 0.85rem;
+      padding: 0.75rem;
+      border-radius: 6px;
+      background: #0f172a;
+      margin-bottom: 1rem;
+      color: var(--text-muted);
+      border: 1px solid #334155;
+      word-wrap: break-word;
+    }
+
+    .warning-banner {
+      background: rgba(234, 179, 8, 0.2);
+      border: 1px solid var(--accent-yellow);
+      color: var(--accent-yellow);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .form-group { margin-bottom: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; }
+    input, select, button {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: var(--text-main);
+      font-size: 1rem;
+    }
+    button {
+      background: var(--accent-blue);
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.btn-danger { background: var(--accent-red); }
+
+    .qr-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      background: #0f172a;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+    }
+    .qr-box img { border-radius: 8px; border: 4px solid white; }
+
+    .announcement {
+      font-size: 1.25rem;
+      font-weight: bold;
+      text-align: center;
+      padding: 1.25rem;
+      border-radius: 8px;
+      background: #0f172a;
+      margin: 1.5rem 0;
+      border: 2px dashed var(--accent-blue);
+    }
+
+    .player-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    .player-card {
+      background: #0f172a;
+      padding: 0.85rem;
+      border-radius: 8px;
+      text-align: center;
+      border: 1px solid #334155;
+    }
+    .player-card.eliminated { opacity: 0.4; text-decoration: line-through; border-color: var(--accent-red); }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div id="file-warning" class="warning-banner hidden">
+      ⚠️ WARNING: You are running this file locally (file://). Phones will NOT be able to connect due to browser security. Please host this online to play.
+    </div>
+
+    <div id="connection-status" class="status-bar">Select your device role to start</div>
+
+    <!-- LANDING VIEW -->
+    <div id="view-landing">
+      <h1>MAFIA GAME</h1>
+      <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem;">
+        <button onclick="switchRole('screen')">Open Screen Display View (Host)</button>
+        <button onclick="switchRole('player')" style="background: #475569;">Join as Player</button>
+      </div>
+    </div>
+
+    <!-- 1. SCREEN DISPLAY SIDE -->
+    <div id="view-screen" class="hidden">
+      <h1>MAIN DISPLAY</h1>
+      
+      <!-- QR Box (Visible only in Lobby) -->
+      <div id="qr-box-container" class="qr-box">
+        <h3>SCAN TO JOIN GAME</h3>
+        <img id="qr-image" src="" alt="QR Code" width="180" height="180">
+        <p>Or Enter Code: <strong id="screen-room-code" style="color: var(--accent-blue); font-size: 1.4rem;">----</strong></p>
+      </div>
+
+      <!-- Active Game Status Panel (Visible when Game Starts) -->
+      <div id="display-game-info" class="hidden" style="background: #0f172a; padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; text-align: center; border: 1px solid #334155;">
+        <h3 style="color: var(--accent-blue); margin-bottom: 0.5rem;">GAME IN PROGRESS</h3>
+        <p style="font-size: 1.1rem;">Current Stage: <strong id="current-phase-display" style="color: var(--accent-yellow);">Lobby</strong></p>
+      </div>
+
+      <div id="screen-announcement" class="announcement">Waiting for players to join...</div>
+
+      <div id="moderator-selection-panel">
+        <h3>Select Game Moderator</h3>
+        <div class="form-group">
+          <select id="mod-select-dropdown">
+            <option value="">-- Waiting for players to join... --</option>
+          </select>
+        </div>
+        <button onclick="assignModerator()">Confirm Moderator & Lock Lobby</button>
+      </div>
+
+      <h3 style="margin-top: 2rem;">Joined Players (<span id="player-count">0</span>)</h3>
+      <div id="screen-player-list" class="player-grid"></div>
+    </div>
+
+    <!-- 2. MODERATOR SIDE -->
+    <div id="view-moderator" class="hidden">
+      <h2>MODERATOR DASHBOARD <span class="badge badge-blue">Host</span></h2>
+      
+      <div style="background: #0f172a; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+        <p>Secret Assigned Mafia: <strong id="secret-mafia-name" style="color: var(--accent-red); font-size: 1.2rem;">[Secret]</strong></p>
+      </div>
+
+      <div id="mod-controls" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem;">
+        <button id="btn-start-game" onclick="startMafiaTurn()">Start Game (Night Phase: Mafia Choice)</button>
+        <button id="btn-start-discussion" class="hidden" onclick="startDiscussionPhase()">Begin Discussion & Voting Phase</button>
+        <button id="btn-tally-votes" class="hidden" class="btn-danger" onclick="tallyVotes()">Tally Votes & Announce Result</button>
+      </div>
+
+      <h3 style="margin-top: 2rem;">Player Status</h3>
+      <div id="mod-player-list" class="player-grid"></div>
+    </div>
+
+    <!-- 3. PLAYER SIDE -->
+    <div id="view-player" class="hidden">
+      <div id="player-login-form">
+        <h2>JOIN MAFIA GAME</h2>
+        <div class="form-group">
+          <label>Your Name:</label>
+          <input type="text" id="player-name-input" placeholder="Enter your name">
+        </div>
+        <div class="form-group">
+          <label>Room Code:</label>
+          <input type="text" id="player-room-input" placeholder="4-Letter Code" autocomplete="off">
+        </div>
+        <button id="btn-join" onclick="joinGame()">Join Game</button>
+      </div>
+
+      <div id="player-active-panel" class="hidden">
+        <h2>PLAYER: <span id="player-display-name"></span></h2>
+        <p style="text-align: center; margin-bottom: 1rem;">Role: <span id="player-role-badge" class="badge">Townsperson</span></p>
+
+        <div id="player-action-box" class="announcement" style="font-size: 1rem;">
+          Waiting for the game to start...
+        </div>
+
+        <div id="player-interactive-options" class="player-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if (window.location.protocol === 'file:') {
+      document.getElementById('file-warning').classList.remove('hidden');
+    }
+
+    let isHost = false;
+    let peer = null;
+    let hostConnection = null;
+    let playerConnections = []; 
+    let localPlayerId = null;
+    let roomCode = '';
+
+    const peerConfig = {
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun.services.mozilla.com' }
+        ]
+      },
+      debug: 2 
+    };
+
+    let state = {
+      roomCode: '',
+      phase: 'LOBBY',
+      players: [],
+      moderatorId: null,
+      mafiaId: null,
+      mafiaTarget: null,
+      votes: {},
+      announcement: 'Waiting for players to join...'
+    };
+
+    function updateStatus(msg, isSuccess = false) {
+      console.log("STATUS UPDATE:", msg);
+      const el = document.getElementById('connection-status');
+      el.innerText = msg;
+      if (isSuccess) el.style.color = 'var(--accent-green)';
+      else if (msg.includes('🔴') || msg.includes('Error')) el.style.color = 'var(--accent-red)';
+      else el.style.color = 'var(--text-main)';
+    }
+
+    function switchRole(role) {
+      document.getElementById('view-landing').classList.add('hidden');
+      document.getElementById('view-screen').classList.add('hidden');
+      document.getElementById('view-moderator').classList.add('hidden');
+      document.getElementById('view-player').classList.add('hidden');
+
+      if (role === 'screen') {
+        isHost = true;
+        document.getElementById('view-screen').classList.remove('hidden');
+        initHostScreen();
+      } else if (role === 'moderator') {
+        document.getElementById('view-moderator').classList.remove('hidden');
+      } else if (role === 'player') {
+        document.getElementById('view-player').classList.remove('hidden');
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const codeFromUrl = urlParams.get('code');
+        if (codeFromUrl) {
+          document.getElementById('player-room-input').value = codeFromUrl.toUpperCase();
+        }
+      }
+    }
+
+    // --- WIN CONDITION CHECKER ---
+    function checkWinConditions() {
+      const aliveMafia = state.players.filter(p => p.isAlive && p.isMafia).length;
+      const aliveTown = state.players.filter(p => p.isAlive && !p.isMafia && !p.isModerator).length;
+
+      if (aliveMafia === 0) {
+        state.announcement = "All Mafia have been eliminated! The Town Wins! 🎉";
+        state.phase = 'GAME_OVER';
+        return true;
+      } else if (aliveMafia >= aliveTown) {
+        const mafiaName = state.players.find(p => p.isMafia)?.name || 'The Mafia';
+        state.announcement = `The Mafia (${mafiaName}) equals or outnumbers the Town! The Mafia Wins! 🦹‍♂️`;
+        state.phase = 'GAME_OVER';
+        return true;
+      }
+      return false;
+    }
+
+    // --- HOST / DISPLAY SCREEN LOGIC ---
+    function initHostScreen() {
+      roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+      state.roomCode = roomCode;
+      document.getElementById('screen-room-code').innerText = roomCode;
+
+      let baseUrl = window.location.href.split('?')[0];
+      const currentUrl = baseUrl + '?role=player&code=' + roomCode;
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(currentUrl)}`;
+      document.getElementById('qr-image').src = qrApiUrl;
+
+      updateStatus(`Initializing Display Host Server (${roomCode})...`);
+
+      const hostId = `mafia-${roomCode.toLowerCase()}`;
+      
+      try {
+        peer = new Peer(hostId, peerConfig);
+      } catch (err) {
+        updateStatus(`🔴 Critical setup error: ${err.message}`);
+        return;
+      }
+
+      peer.on('open', (id) => {
+        updateStatus(`🟢 Display Screen Online! Ready for players.`, true);
+        render();
+      });
+
+      peer.on('connection', (conn) => {
+        updateStatus(`Incoming connection attempt from a player...`);
+        playerConnections.push(conn);
+
+        conn.on('open', () => {
+          updateStatus(`🟢 Player data channel connected.`);
+          conn.send({ type: 'STATE_UPDATE', state: state });
+        });
+
+        conn.on('data', (data) => {
+          handleHostIncomingMessage(conn, data);
+        });
+
+        conn.on('close', () => {
+          playerConnections = playerConnections.filter(c => c !== conn);
+        });
+
+        conn.on('error', (err) => {
+          updateStatus(`🔴 Host Connection Error: ${err.message}`);
+        });
+      });
+
+      peer.on('error', (err) => {
+        updateStatus(`🔴 Host Peer Error [${err.type}]: ${err.message}`);
+      });
+      
+      peer.on('disconnected', () => {
+        updateStatus(`🔴 Host disconnected from signaling server. Reconnecting...`);
+        peer.reconnect();
+      });
+    }
+
+    function handleHostIncomingMessage(conn, msg) {
+      if (msg.type === 'JOIN_REQUEST') {
+        const existingPlayer = state.players.find(p => p.name.toLowerCase() === msg.player.name.toLowerCase());
+        if (existingPlayer) {
+          existingPlayer.id = msg.player.id;
+        } else {
+          state.players.push(msg.player);
+        }
+        broadcastStateToAll();
+      } else if (msg.type === 'MAFIA_TARGET') {
+        state.mafiaTarget = msg.targetId;
+        state.announcement = "The MAFIA has made a secret choice...";
+        broadcastStateToAll();
+      } else if (msg.type === 'SUBMIT_VOTE') {
+        state.votes[msg.voterId] = msg.targetId;
+        broadcastStateToAll();
+      } else if (msg.type === 'MOD_ACTION') {
+        if (msg.action === 'START_MAFIA_TURN') {
+          state.phase = 'NIGHT_MAFIA';
+          state.mafiaTarget = null;
+          state.votes = {};
+          state.announcement = "Night Phase: The MAFIA is choosing a target...";
+          broadcastStateToAll();
+        } else if (msg.action === 'START_DISCUSSION') {
+          if (!state.mafiaTarget) return;
+          const target = state.players.find(p => p.id === state.mafiaTarget);
+          if (target) target.isAlive = false;
+
+          // Check if game ends after night elimination
+          if (!checkWinConditions()) {
+            state.phase = 'DAY_VOTING';
+            state.announcement = `${target.name} was eliminated during the night! Discuss and vote.`;
+          }
+          broadcastStateToAll();
+        } else if (msg.action === 'TALLY_VOTES') {
+          const voteCounts = {};
+          Object.values(state.votes).forEach(targetId => {
+            voteCounts[targetId] = (voteCounts[targetId] || 0) + 1;
+          });
+
+          let highestVotes = 0;
+          let eliminatedId = null;
+
+          for (const [targetId, count] of Object.entries(voteCounts)) {
+            if (count > highestVotes) {
+              highestVotes = count;
+              eliminatedId = targetId;
+            }
+          }
+
+          if (!eliminatedId) return;
+
+          const eliminatedPlayer = state.players.find(p => p.id === eliminatedId);
+          eliminatedPlayer.isAlive = false;
+
+          // Check win conditions after day vote elimination
+          if (!checkWinConditions()) {
+            state.announcement = `${eliminatedPlayer.name} IS NOT THE MAFIA! Moving to next night...`;
+            state.phase = 'NIGHT_MAFIA';
+            state.mafiaTarget = null;
+            state.votes = {};
+          }
+          broadcastStateToAll();
+        }
+      }
+    }
+
+    function broadcastStateToAll() {
+      playerConnections.forEach(conn => {
+        if (conn.open) conn.send({ type: 'STATE_UPDATE', state: state });
+      });
+      render();
+    }
+
+    // --- PLAYER LOGIC ---
+    function joinGame() {
+      const name = document.getElementById('player-name-input').value.trim();
+      const inputCode = document.getElementById('player-room-input').value.trim().toUpperCase();
+
+      if (!name) return alert('Please enter your name');
+      if (!inputCode) return alert('Please enter the Room Code');
+
+      document.getElementById('btn-join').disabled = true;
+      updateStatus(`Connecting to signaling server...`);
+
+      localPlayerId = 'p_' + Math.random().toString(36).substr(2, 9);
+      const newPlayer = { id: localPlayerId, name: name, isAlive: true, isMafia: false, isModerator: false };
+
+      try {
+        peer = new Peer(peerConfig);
+      } catch (err) {
+        updateStatus(`🔴 Setup Error: ${err.message}`);
+        document.getElementById('btn-join').disabled = false;
+        return;
+      }
+
+      peer.on('open', (id) => {
+        updateStatus(`Locating Display Screen (${inputCode})...`);
+        
+        const targetId = `mafia-${inputCode.toLowerCase()}`;
+        hostConnection = peer.connect(targetId, { reliable: true });
+
+        let connectTimeout = setTimeout(() => {
+          if (!hostConnection || !hostConnection.open) {
+            updateStatus(`🔴 Connection timed out. Ensure the Display Screen is open and code is correct.`);
+            document.getElementById('btn-join').disabled = false;
+          }
+        }, 8000);
+
+        hostConnection.on('open', () => {
+          clearTimeout(connectTimeout);
+          updateStatus(`🟢 Connected to Display Screen!`, true);
+          
+          hostConnection.send({ type: 'JOIN_REQUEST', player: newPlayer });
+
+          document.getElementById('player-login-form').classList.add('hidden');
+          document.getElementById('player-active-panel').classList.remove('hidden');
+          document.getElementById('player-display-name').innerText = name;
+        });
+
+        hostConnection.on('data', (data) => {
+          if (data.type === 'STATE_UPDATE') {
+            state = data.state;
+            render();
+          }
+        });
+
+        hostConnection.on('close', () => {
+          updateStatus(`🔴 Disconnected from Main Display`);
+        });
+
+        hostConnection.on('error', (err) => {
+          clearTimeout(connectTimeout);
+          updateStatus(`🔴 Connection Error: ${err.message}`);
+          document.getElementById('btn-join').disabled = false;
+        });
+      });
+
+      peer.on('error', (err) => {
+        updateStatus(`🔴 Peer Error [${err.type}]: ${err.message}`);
+        document.getElementById('btn-join').disabled = false;
+      });
+    }
+
+    // --- MODERATOR & GAME ACTIONS ---
+    function assignModerator() {
+      const select = document.getElementById('mod-select-dropdown');
+      const selectedId = select.value;
+      if (!selectedId) return alert('Select a player to be Moderator!');
+
+      state.moderatorId = selectedId;
+      const eligibleForMafia = state.players.filter(p => p.id !== selectedId);
+      if (eligibleForMafia.length < 2) return alert('At least 3 players required (1 Moderator, 1 Mafia, 1+ Town)!');
+
+      const mafiaIndex = Math.floor(Math.random() * eligibleForMafia.length);
+      state.mafiaId = eligibleForMafia[mafiaIndex].id;
+
+      state.players.forEach(p => {
+        p.isModerator = (p.id === state.moderatorId);
+        p.isMafia = (p.id === state.mafiaId);
+      });
+
+      state.announcement = "Moderator selected! Transferring control to Moderator Dashboard...";
+      broadcastStateToAll();
+    }
+
+    function startMafiaTurn() {
+      if (hostConnection && hostConnection.open) {
+        hostConnection.send({ type: 'MOD_ACTION', action: 'START_MAFIA_TURN' });
+      }
+    }
+
+    function startDiscussionPhase() {
+      if (!state.mafiaTarget) return alert("The Mafia hasn't chosen a target yet!");
+      if (hostConnection && hostConnection.open) {
+        hostConnection.send({ type: 'MOD_ACTION', action: 'START_DISCUSSION' });
+      }
+    }
+
+    function tallyVotes() {
+      if (Object.keys(state.votes).length === 0) return alert('No votes were submitted!');
+      if (hostConnection && hostConnection.open) {
+        hostConnection.send({ type: 'MOD_ACTION', action: 'TALLY_VOTES' });
+      }
+    }
+
+    function submitMafiaTarget(targetId) {
+      if (hostConnection && hostConnection.open) {
+        hostConnection.send({ type: 'MAFIA_TARGET', targetId: targetId });
+      }
+    }
+
+    function submitVote(targetId) {
+      if (hostConnection && hostConnection.open) {
+        hostConnection.send({ type: 'SUBMIT_VOTE', voterId: localPlayerId, targetId: targetId });
+      }
+    }
+
+    function getPhaseDisplayName(phase) {
+      switch(phase) {
+        case 'LOBBY': return 'Lobby (Waiting to Start)';
+        case 'NIGHT_MAFIA': return 'Night Phase (Mafia Action)';
+        case 'DAY_VOTING': return 'Day Phase (Discussion & Voting)';
+        case 'GAME_OVER': return 'Game Over (Match Finished)';
+        default: return phase;
+      }
+    }
+
+    // --- UI RENDER LOOP ---
+    function render() {
+      const localPlayer = state.players.find(p => p.id === localPlayerId);
+      if (localPlayer && localPlayer.isModerator && !document.getElementById('view-player').classList.contains('hidden')) {
+        switchRole('moderator');
+      }
+
+      // 1. Render Display Screen
+      document.getElementById('player-count').innerText = state.players.length;
+      document.getElementById('screen-announcement').innerText = state.announcement;
+
+      const qrBoxContainer = document.getElementById('qr-box-container');
+      const displayGameInfo = document.getElementById('display-game-info');
+
+      if (state.phase === 'LOBBY') {
+        qrBoxContainer.classList.remove('hidden');
+        displayGameInfo.classList.add('hidden');
+      } else {
+        qrBoxContainer.classList.add('hidden');
+        displayGameInfo.classList.remove('hidden');
+        document.getElementById('current-phase-display').innerText = getPhaseDisplayName(state.phase);
+      }
+
+      const screenList = document.getElementById('screen-player-list');
+      const modDropdown = document.getElementById('mod-select-dropdown');
+      
+      screenList.innerHTML = '';
+      modDropdown.innerHTML = state.players.length === 0 
+        ? '<option value="">-- Waiting for players to join... --</option>'
+        : '<option value="">-- Choose a player --</option>';
+
+      state.players.forEach(p => {
+        const card = document.createElement('div');
+        card.className = `player-card ${!p.isAlive ? 'eliminated' : ''}`;
+        card.innerText = p.name + (p.isModerator ? ' (Mod)' : '');
+        screenList.appendChild(card);
+
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.innerText = p.name;
+        modDropdown.appendChild(opt);
+      });
+
+      if (state.moderatorId) {
+        document.getElementById('moderator-selection-panel').classList.add('hidden');
+      }
+
+      // 2. Render Moderator Dashboard
+      const mafiaPlayer = state.players.find(p => p.isMafia);
+      document.getElementById('secret-mafia-name').innerText = mafiaPlayer ? mafiaPlayer.name : '[Assigned upon game start]';
+
+      const modPlayerList = document.getElementById('mod-player-list');
+      modPlayerList.innerHTML = '';
+      state.players.forEach(p => {
+        const card = document.createElement('div');
+        card.className = `player-card ${!p.isAlive ? 'eliminated' : ''}`;
+        card.innerText = p.name + (p.isMafia ? ' [MAFIA]' : '');
+        modPlayerList.appendChild(card);
+      });
+
+      const btnStart = document.getElementById('btn-start-game');
+      const btnDiscuss = document.getElementById('btn-start-discussion');
+      const btnTally = document.getElementById('btn-tally-votes');
+
+      if (state.phase === 'LOBBY') {
+        btnStart.classList.remove('hidden');
+        btnDiscuss.classList.add('hidden');
+        btnTally.classList.add('hidden');
+      } else if (state.phase === 'NIGHT_MAFIA') {
+        btnStart.classList.add('hidden');
+        btnDiscuss.classList.remove('hidden');
+        btnTally.classList.add('hidden');
+      } else if (state.phase === 'DAY_VOTING') {
+        btnDiscuss.classList.add('hidden');
+        btnTally.classList.remove('hidden');
+      } else {
+        btnStart.classList.add('hidden');
+        btnDiscuss.classList.add('hidden');
+        btnTally.classList.add('hidden');
+      }
+
+      // 3. Render Player Controls
+      if (localPlayer) {
+        const roleBadge = document.getElementById('player-role-badge');
+        const actionBox = document.getElementById('player-action-box');
+        const optionsBox = document.getElementById('player-interactive-options');
+        optionsBox.innerHTML = '';
+
+        if (localPlayer.isMafia) {
+          roleBadge.innerText = 'MAFIA';
+          roleBadge.className = 'badge badge-red';
+        } else {
+          roleBadge.innerText = 'TOWN';
+          roleBadge.className = 'badge badge-green';
+        }
+
+        if (state.phase === 'GAME_OVER') {
+          actionBox.innerText = 'Game Over! Check the Main Display for results.';
+          return;
+        }
+
+        if (!localPlayer.isAlive) {
+          actionBox.innerText = 'You have been eliminated!';
+          return;
+        }
+
+        if (state.phase === 'LOBBY') {
+          actionBox.innerText = 'Connected! Waiting for Moderator selection on Main Display...';
+        }
+        else if (state.phase === 'NIGHT_MAFIA') {
+          if (localPlayer.isMafia) {
+            actionBox.innerText = 'You are the MAFIA. Select a player to eliminate:';
+            state.players.filter(p => p.isAlive && !p.isMafia && !p.isModerator).forEach(p => {
+              const btn = document.createElement('button');
+              btn.className = 'btn-danger';
+              btn.innerText = `Eliminate ${p.name}`;
+              btn.onclick = () => submitMafiaTarget(p.id);
+              optionsBox.appendChild(btn);
+            });
+          } else {
+            actionBox.innerText = 'Night Time... Close your eyes. The Mafia is taking action.';
+          }
+        } else if (state.phase === 'DAY_VOTING') {
+          actionBox.innerText = 'Vote for who you suspect is the MAFIA:';
+          state.players.filter(p => p.isAlive && !p.isModerator).forEach(p => {
+            const btn = document.createElement('button');
+            btn.innerText = `Vote for ${p.name}`;
+            if (state.votes[localPlayerId] === p.id) {
+              btn.style.background = 'var(--accent-green)';
+              btn.innerText += ' (Voted)';
+            }
+            btn.onclick = () => submitVote(p.id);
+            optionsBox.appendChild(btn);
+          });
+        }
+      }
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const roleParam = urlParams.get('role');
+    if (roleParam) switchRole(roleParam);
+  </script>
+</body>
+</html>
