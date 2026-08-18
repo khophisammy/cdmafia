@@ -1,347 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mafia Web Game</title>
-  
-  <!-- PeerJS for Direct WebRTC Cross-Device Connections -->
-  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-  
-  <!-- Google Fonts for Modern UI -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-  
-  <style>
-    :root {
-      /* Light, modern, attractive color palette */
-      --bg-gradient: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
-      --card-bg: rgba(255, 255, 255, 0.85);
-      --card-border: rgba(255, 255, 255, 0.5);
-      --shadow-soft: 0 20px 40px -10px rgba(16, 42, 67, 0.1);
-      
-      --accent-red: #e11d48;
-      --accent-blue: #0284c7;
-      --accent-green: #059669;
-      --accent-yellow: #d97706;
-      
-      --text-main: #102a43;
-      --text-muted: #627d98;
-      --text-light: #829ab1;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    /* NO SCROLL DESKTOP LAYOUT */
-    body {
-      font-family: 'Nunito', sans-serif;
-      background: var(--bg-gradient);
-      color: var(--text-main);
-      height: 100vh;
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 1.5rem;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 1200px;
-      height: 100%;
-      max-height: 850px;
-      background: var(--card-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-radius: 24px;
-      padding: 2.5rem;
-      box-shadow: var(--shadow-soft);
-      border: 1px solid var(--card-border);
-      display: flex;
-      flex-direction: column;
-      animation: fadeIn 0.5s ease-out;
-      position: relative;
-    }
-
-    h1, h2, h3 { 
-      font-family: 'Montserrat', sans-serif; 
-      text-transform: uppercase;
-      text-align: center;
-    }
-
-    h1 { font-size: 3rem; margin-bottom: 0.5rem; font-weight: 800; color: var(--text-main); letter-spacing: -1px; }
-    h2 { font-size: 1.8rem; margin-bottom: 1rem; color: var(--accent-blue); }
-    h3 { font-size: 1.3rem; margin-bottom: 1rem; color: var(--text-main); }
-
-    .tagline {
-      text-align: center;
-      font-size: 1.2rem;
-      color: var(--text-muted);
-      margin-bottom: 2rem;
-      font-weight: 600;
-    }
-
-    .badge { 
-      display: inline-block; padding: 0.35rem 1rem; border-radius: 50px; 
-      font-size: 0.85rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
-    }
-    .badge-red { background: rgba(225, 29, 72, 0.1); color: var(--accent-red); border: 1px solid var(--accent-red); }
-    .badge-blue { background: rgba(2, 132, 199, 0.1); color: var(--accent-blue); border: 1px solid var(--accent-blue); }
-    .badge-green { background: rgba(5, 150, 105, 0.1); color: var(--accent-green); border: 1px solid var(--accent-green); }
-
-    .status-bar {
-      text-align: center; font-size: 0.95rem; padding: 0.75rem; border-radius: 12px;
-      background: rgba(255,255,255,0.6); margin-bottom: 1rem; color: var(--text-muted);
-      font-weight: 600; border: 1px solid rgba(0,0,0,0.05); flex-shrink: 0;
-    }
-
-    .form-group { margin-bottom: 1.25rem; display: flex; flex-direction: column; gap: 0.4rem; }
-    .form-group label { font-size: 0.9rem; color: var(--text-muted); font-weight: 700; }
-    
-    input, select, button {
-      width: 100%; padding: 0.9rem 1.2rem; border-radius: 12px;
-      border: 2px solid #e2e8f0; background: #fff; color: var(--text-main);
-      font-size: 1rem; font-family: 'Nunito', sans-serif; font-weight: 600;
-      transition: all 0.2s ease;
-    }
-    input:focus, select:focus { outline: none; border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15); }
-
-    button {
-      background: var(--accent-blue); color: white; border: none; font-weight: 700;
-      cursor: pointer; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
-    }
-    button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(2, 132, 199, 0.4); }
-    button:active { transform: translateY(1px); }
-    button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
-    
-    button.btn-danger { background: var(--accent-red); box-shadow: 0 4px 14px rgba(225, 29, 72, 0.3); }
-    button.btn-danger:hover { box-shadow: 0 6px 20px rgba(225, 29, 72, 0.4); }
-    button.btn-alt { background: #fff; color: var(--text-main); border: 2px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-    button.btn-alt:hover { border-color: var(--text-muted); }
-
-    .screen-layout {
-      display: grid;
-      grid-template-columns: 1fr 1.5fr;
-      gap: 2rem;
-      flex: 1;
-      overflow: hidden;
-      margin-top: 1rem;
-    }
-
-    .screen-left { display: flex; flex-direction: column; gap: 1.5rem; }
-
-    .screen-right {
-      display: flex; flex-direction: column; background: rgba(255, 255, 255, 0.6);
-      border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(0,0,0,0.05);
-      overflow-y: auto;
-    }
-
-    .qr-box {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: #fff; padding: 2rem; border-radius: 16px; 
-      border: 2px dashed rgba(2, 132, 199, 0.3); box-shadow: var(--shadow-soft); text-align: center;
-    }
-    .qr-box img { border-radius: 12px; margin: 1rem 0; width: 160px; height: 160px; }
-    .room-code-display { font-family: 'Montserrat', sans-serif; font-size: 3.5rem; font-weight: 800; color: var(--accent-blue); letter-spacing: 5px; line-height: 1; }
-
-    .announcement {
-      font-size: 1.15rem; font-weight: 700; text-align: center; padding: 1.25rem;
-      border-radius: 12px; background: rgba(2, 132, 199, 0.08);
-      border: 1px solid rgba(2, 132, 199, 0.2); color: var(--accent-blue);
-    }
-
-    .player-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem; margin-top: 1rem;
-    }
-    .player-card {
-      background: #fff; padding: 1rem 0.5rem; border-radius: 12px; text-align: center;
-      border: 1px solid #e2e8f0; font-weight: 700; color: var(--text-main);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: transform 0.2s; cursor: pointer;
-    }
-    .player-card:hover { transform: translateY(-3px); border-color: var(--accent-blue); }
-    .player-card.eliminated { 
-      opacity: 0.6; text-decoration: line-through; border-color: var(--accent-red); 
-      background: #fff1f2; color: var(--accent-red); filter: grayscale(100%); cursor: default;
-    }
-
-    .game-active-panel {
-      background: #fff; padding: 2rem 1rem; border-radius: 16px;
-      text-align: center; border: 2px solid var(--accent-yellow); box-shadow: var(--shadow-soft);
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
-      height: 100%;
-    }
-    .game-active-panel h3 { color: var(--accent-yellow); font-size: 1.8rem; }
-
-    .audio-controls { position: absolute; top: 1.5rem; right: 1.5rem; }
-    .audio-controls button {
-      padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 50px; background: #fff;
-      color: var(--text-main); box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;
-    }
-
-    #big-popup {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(16, 42, 67, 0.92); z-index: 9999;
-      display: flex; justify-content: center; align-items: center;
-      opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-    }
-    #big-popup.show { opacity: 1; pointer-events: auto; }
-    
-    .popup-content {
-      background: #fff; padding: 4rem 3rem; border-radius: 24px; text-align: center; width: 90%; max-width: 800px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-      transform: scale(0.85) translateY(20px); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    #big-popup.show .popup-content { transform: scale(1) translateY(0); }
-    
-    #popup-title { font-size: 4rem; font-weight: 900; margin-bottom: 1rem; line-height: 1.1; font-family: 'Montserrat', sans-serif; text-transform: uppercase; }
-    #popup-subtitle { font-size: 1.8rem; font-weight: 700; color: var(--text-muted); font-family: 'Nunito', sans-serif; }
-
-    .hidden { display: none !important; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-    @media (max-width: 768px) {
-      body { height: auto; overflow: auto; padding: 1rem; }
-      .container { max-height: none; height: auto; padding: 1.5rem; }
-      .screen-layout { grid-template-columns: 1fr; overflow: visible; }
-    }
-  </style>
-</head>
-<body>
-
-  <!-- BACKGROUND MUSIC -->
-  <audio id="bg-music" loop>
-    <source src="background.mp3" type="audio/mpeg">
-  </audio>
-
-  <!-- PERSISTENT POPUP OVERLAY -->
-  <div id="big-popup" class="hidden">
-    <div class="popup-content">
-      <h1 id="popup-title">EVENT</h1>
-      <p id="popup-subtitle">Detail goes here</p>
-    </div>
-  </div>
-
-  <div class="container">
-    <div id="connection-status" class="status-bar">Waiting for selection...</div>
-
-    <!-- 1. LANDING VIEW -->
-    <div id="view-landing" style="display: flex; flex-direction: column; justify-content: center; flex: 1;">
-      <h1>MAFIA</h1>
-      <p class="tagline">a game that shape our stories</p>
-      
-      <div style="display: flex; flex-direction: column; gap: 1.25rem; max-width: 400px; margin: 0 auto; width: 100%;">
-        <button onclick="switchRole('screen')" style="padding: 1.2rem; font-size: 1.1rem;">🖥️ Open Main Display (Host)</button>
-        <button onclick="switchRole('player')" class="btn-alt" style="padding: 1.2rem; font-size: 1.1rem;">📱 Join as Player</button>
-      </div>
-    </div>
-
-    <!-- 2. SCREEN DISPLAY SIDE (BIG SCREEN) -->
-    <div id="view-screen" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
-      <div class="audio-controls">
-        <button id="mute-btn" onclick="toggleAudio()">🔊 Mute Music</button>
-      </div>
-
-      <h1 style="font-size: 2.2rem;">THE LOBBY</h1>
-      <div id="screen-announcement" class="announcement">Waiting for players to connect...</div>
-
-      <div class="screen-layout">
-        <div class="screen-left">
-          <div id="qr-box-container" class="qr-box">
-            <h3>SCAN TO JOIN</h3>
-            <img id="qr-image" src="" alt="QR Code">
-            <p style="color: var(--text-muted); font-weight: 700;">OR ENTER CODE:</p>
-            <div id="screen-room-code" class="room-code-display">----</div>
-          </div>
-
-          <div id="display-game-info" class="game-active-panel hidden">
-            <h3>GAME IN PROGRESS</h3>
-            <p style="font-size: 1.1rem; font-weight: 700; color: var(--text-muted); margin-top: 0.75rem;">
-              Current Phase:<br>
-              <strong id="current-phase-display" style="color: var(--accent-blue); font-size: 1.8rem;">Lobby</strong>
-            </p>
-            
-            <div id="screen-action-status" style="margin-top: 1rem; width: 100%; padding: 0.85rem; border-radius: 10px; background: rgba(225, 29, 72, 0.08); border: 1px solid var(--accent-red); color: var(--accent-red); font-weight: 700; font-size: 0.95rem;">
-              🌙 Night Phase: Waiting for the Mafia to choose...
-            </div>
-          </div>
-        </div>
-
-        <div class="screen-right">
-          <div id="moderator-selection-panel" style="background: #fff; padding: 1.25rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-            <h3 style="font-size: 1.1rem; color: var(--text-main);">Assign Moderator</h3>
-            <div class="form-group" style="margin-bottom: 1rem;">
-              <select id="mod-select-dropdown">
-                <option value="">-- Waiting for players... --</option>
-              </select>
-            </div>
-            <button onclick="assignModerator()" style="background: var(--accent-green); box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);">
-              Lock Lobby & Confirm Moderator
-            </button>
-          </div>
-
-          <h3 style="text-align: left; font-size: 1.2rem;">Joined Players (<span id="player-count">0</span>)</h3>
-          <div id="screen-player-list" class="player-grid"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 3. MODERATOR SIDE -->
-    <div id="view-moderator" class="hidden">
-      <h2>MODERATOR DASHBOARD</h2>
-      
-      <div style="background: #fff; padding: 1.5rem; border-radius: 12px; margin: 1.5rem 0; border: 2px dashed var(--accent-red); text-align: center;">
-        <p style="font-size: 1.1rem; color: var(--text-muted); font-weight: 700;">Secret Assigned Mafia:</p>
-        <p id="secret-mafia-name" style="font-family: 'Montserrat'; color: var(--accent-red); font-size: 2.5rem; font-weight: 800;">[Secret]</p>
-      </div>
-
-      <div id="mod-announcement" class="announcement" style="margin-bottom: 1.5rem;">
-        Waiting for game action...
-      </div>
-
-      <div id="mod-controls" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
-        <button id="btn-start-game" onclick="startMafiaTurn()">Start Game (Night Phase)</button>
-        <button id="btn-start-discussion" class="hidden" onclick="startDiscussionPhase()">Begin Discussion & Voting Phase</button>
-        <button id="btn-tally-votes" class="hidden btn-danger" onclick="tallyVotes()">Tally Votes & Reveal Result</button>
-      </div>
-
-      <h3 style="margin-top: 2rem;">Player Status</h3>
-      <div id="mod-player-list" class="player-grid"></div>
-    </div>
-
-    <!-- 4. PLAYER SIDE -->
-    <div id="view-player" class="hidden" style="max-width: 500px; margin: 0 auto; width: 100%;">
-      <div id="player-login-form">
-        <h2>JOIN THE STORY</h2>
-        <div class="form-group">
-          <label>Your Name:</label>
-          <input type="text" id="player-name-input" placeholder="e.g. John Doe">
-        </div>
-        <div class="form-group">
-          <label>Room Code:</label>
-          <input type="text" id="player-room-input" placeholder="4-Letter Code" autocomplete="off" style="text-transform: uppercase;">
-        </div>
-        <button id="btn-join" onclick="joinGame()" style="margin-top: 1rem; padding: 1rem;">Connect</button>
-      </div>
-
-      <div id="player-active-panel" class="hidden">
-        <h2><span id="player-display-name" style="color: var(--accent-blue);"></span></h2>
-        
-        <div style="text-align: center; margin-bottom: 2rem;">
-          <span style="color: var(--text-muted); font-size: 0.9rem; font-weight: 700; margin-right: 10px;">ROLE:</span>
-          <span id="player-role-badge" class="badge badge-green">Townsperson</span>
-        </div>
-
-        <div id="player-action-box" class="announcement">
-          Waiting for the game to start...
-        </div>
-
-        <div id="player-interactive-options" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem;"></div>
-      </div>
-    </div>
-  </div>
-
-  <script>
+<script>
     let isHost = false; let peer = null; let hostConnection = null;
     let playerConnections = []; let localPlayerId = null; let roomCode = '';
 
@@ -367,7 +24,7 @@
       if (!el) return;
       el.innerText = msg;
       if (isSuccess) el.style.color = 'var(--accent-green)';
-      else if (msg.includes('🔴') || msg.includes('Error')) el.style.color = 'var(--accent-red)';
+      else if (msg.includes('🔴') || msg.includes('Error') || msg.includes('⚠️')) el.style.color = 'var(--accent-red)';
       else el.style.color = 'var(--text-muted)';
     }
 
@@ -446,21 +103,31 @@
     function initHostScreen() {
       roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
       state.roomCode = roomCode;
-      document.getElementById('screen-room-code').innerText = roomCode;
+      const codeDisplay = document.getElementById('screen-room-code');
+      if (codeDisplay) codeDisplay.innerText = roomCode;
 
       let baseUrl = window.location.href.split('?')[0];
       const currentUrl = baseUrl + '?role=player&code=' + roomCode;
       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(currentUrl)}&color=0284c7&bgcolor=ffffff`;
-      document.getElementById('qr-image').src = qrApiUrl;
+      const qrImg = document.getElementById('qr-image');
+      if (qrImg) qrImg.src = qrApiUrl;
 
       updateStatus(`Initializing Server (${roomCode})...`);
       const hostId = `mafia-cd-${roomCode.toLowerCase()}`;
       
-      try { peer = new Peer(hostId, peerConfig); } 
-      catch (err) { updateStatus(`🔴 Error: ${err.message}`); return; }
+      if (peer) {
+        try { peer.destroy(); } catch(e) {}
+      }
+
+      try {
+        peer = new Peer(hostId, peerConfig);
+      } catch (err) {
+        updateStatus(`🔴 Initialization Error: ${err.message}`);
+        return;
+      }
 
       peer.on('open', () => {
-        updateStatus(`🟢 Display Screen Online! Ready for players.`, true);
+        updateStatus(`🟢 Display Screen Online! Room: ${roomCode}`, true);
         render();
       });
 
@@ -472,7 +139,12 @@
       });
 
       peer.on('error', (err) => {
-        updateStatus(`🔴 Peer error: ${err.type}`);
+        if (err.type === 'unavailable-id') {
+          updateStatus(`⚠️ Code ${roomCode} taken. Generating new code...`);
+          setTimeout(initHostScreen, 800);
+        } else {
+          updateStatus(`🔴 Peer error: [${err.type}] ${err.message}`);
+        }
       });
     }
 
@@ -551,15 +223,26 @@
       const name = document.getElementById('player-name-input').value.trim();
       const inputCode = document.getElementById('player-room-input').value.trim().toUpperCase();
 
-      if (!name || !inputCode) return alert('Enter name and code');
-      document.getElementById('btn-join').disabled = true;
-      updateStatus(`Connecting...`);
+      if (!name || !inputCode) return alert('Please enter both your name and room code.');
+      
+      const joinBtn = document.getElementById('btn-join');
+      joinBtn.disabled = true;
+      updateStatus(`Connecting to room ${inputCode}...`);
 
       localPlayerId = 'p_' + Math.random().toString(36).substr(2, 9);
       const newPlayer = { id: localPlayerId, name: name, isAlive: true, isMafia: false, isModerator: false };
 
-      try { peer = new Peer(peerConfig); } 
-      catch (err) { updateStatus(`🔴 Error: ${err.message}`); document.getElementById('btn-join').disabled = false; return; }
+      if (peer) {
+        try { peer.destroy(); } catch(e) {}
+      }
+
+      try {
+        peer = new Peer(peerConfig);
+      } catch (err) {
+        updateStatus(`🔴 Error: ${err.message}`);
+        joinBtn.disabled = false;
+        return;
+      }
 
       peer.on('open', () => {
         const targetId = `mafia-cd-${inputCode.toLowerCase()}`;
@@ -567,23 +250,30 @@
 
         let connectTimeout = setTimeout(() => {
           if (!hostConnection || !hostConnection.open) {
-            updateStatus(`🔴 Connection failed. Check code.`);
-            document.getElementById('btn-join').disabled = false;
+            updateStatus(`🔴 Connection timed out. Check if room code "${inputCode}" is correct.`);
+            joinBtn.disabled = false;
           }
         }, 8000);
 
         hostConnection.on('open', () => {
           clearTimeout(connectTimeout);
-          updateStatus(`🟢 Connected!`, true);
+          updateStatus(`🟢 Connected to Room ${inputCode}!`, true);
           hostConnection.send({ type: 'JOIN_REQUEST', player: newPlayer });
           document.getElementById('player-login-form').classList.add('hidden');
           document.getElementById('player-active-panel').classList.remove('hidden');
           document.getElementById('player-display-name').innerText = name;
         });
 
-        hostConnection.on('data', (data) => {
-          if (data.type === 'STATE_UPDATE') { state = data.state; render(); }
+        hostConnection.on('error', (err) => {
+          clearTimeout(connectTimeout);
+          updateStatus(`🔴 Connection error: ${err.message}`);
+          joinBtn.disabled = false;
         });
+      });
+
+      peer.on('error', (err) => {
+        updateStatus(`🔴 Peer error: [${err.type}] ${err.message}`);
+        joinBtn.disabled = false;
       });
     }
 
@@ -594,7 +284,7 @@
 
       state.moderatorId = selectedId;
       const eligibleForMafia = state.players.filter(p => p.id !== selectedId);
-      if (eligibleForMafia.length < 2) return alert('Need at least 3 players total!');
+      if (eligibleForMafia.length < 2) return alert('Need at least 3 players total in the lobby!');
 
       const mafiaIndex = Math.floor(Math.random() * eligibleForMafia.length);
       state.mafiaId = eligibleForMafia[mafiaIndex].id;
@@ -610,11 +300,11 @@
 
     function startMafiaTurn() { if (hostConnection && hostConnection.open) hostConnection.send({ type: 'MOD_ACTION', action: 'START_MAFIA_TURN' }); }
     function startDiscussionPhase() {
-      if (!state.mafiaTarget) return alert("Mafia hasn't chosen yet!");
+      if (!state.mafiaTarget) return alert("Mafia hasn't chosen a target yet!");
       if (hostConnection && hostConnection.open) hostConnection.send({ type: 'MOD_ACTION', action: 'START_DISCUSSION' });
     }
     function tallyVotes() {
-      if (Object.keys(state.votes).length === 0) return alert('No votes cast!');
+      if (Object.keys(state.votes).length === 0) return alert('No votes have been cast yet!');
       if (hostConnection && hostConnection.open) hostConnection.send({ type: 'MOD_ACTION', action: 'TALLY_VOTES' });
     }
     function submitMafiaTarget(targetId) { if (hostConnection && hostConnection.open) hostConnection.send({ type: 'MAFIA_TARGET', targetId: targetId }); }
@@ -636,7 +326,6 @@
         switchRole('moderator');
       }
 
-      // 1. Render Screen
       const playerCountEl = document.getElementById('player-count');
       if (playerCountEl) playerCountEl.innerText = state.players.length;
       
@@ -687,7 +376,7 @@
       
       if (screenList && modDropdown) {
         screenList.innerHTML = '';
-        modDropdown.innerHTML = state.players.length === 0 ? '<option value="">-- Waiting... --</option>' : '<option value="">-- Choose --</option>';
+        modDropdown.innerHTML = state.players.length === 0 ? '<option value="">-- Waiting for players... --</option>' : '<option value="">-- Choose Moderator --</option>';
 
         state.players.forEach(p => {
           const card = document.createElement('div');
@@ -706,7 +395,6 @@
         if (modSelPanel) modSelPanel.classList.add('hidden');
       }
 
-      // 2. Render Mod Dashboard & Status Banner
       const mafiaPlayer = state.players.find(p => p.isMafia);
       const secretMafiaEl = document.getElementById('secret-mafia-name');
       if (secretMafiaEl) secretMafiaEl.innerText = mafiaPlayer ? mafiaPlayer.name : '[Awaiting Start]';
@@ -716,12 +404,12 @@
         if (state.phase === 'NIGHT_MAFIA') {
           if (state.mafiaTarget) {
             const selectedTarget = state.players.find(p => p.id === state.mafiaTarget);
-            modAnnouncement.innerText = `✅ The Mafia has selected ${selectedTarget ? selectedTarget.name : 'a target'}! Tell players to raise their heads.`;
+            modAnnouncement.innerText = `✅ The Mafia has selected ${selectedTarget ? selectedTarget.name : 'a target'}!`;
             modAnnouncement.style.background = 'rgba(5, 150, 105, 0.1)';
             modAnnouncement.style.borderColor = 'var(--accent-green)';
             modAnnouncement.style.color = 'var(--accent-green)';
           } else {
-            modAnnouncement.innerText = `🌙 Night Phase: ${mafiaPlayer ? mafiaPlayer.name : 'The Mafia'} is making their secret choice on their phone.`;
+            modAnnouncement.innerText = `🌙 Night Phase: ${mafiaPlayer ? mafiaPlayer.name : 'The Mafia'} is making their secret choice.`;
             modAnnouncement.style.background = 'rgba(225, 29, 72, 0.08)';
             modAnnouncement.style.borderColor = 'var(--accent-red)';
             modAnnouncement.style.color = 'var(--accent-red)';
@@ -739,7 +427,6 @@
         }
       }
 
-      // Toggle Mod Control Buttons
       const btnStartGame = document.getElementById('btn-start-game');
       const btnStartDiscussion = document.getElementById('btn-start-discussion');
       const btnTallyVotes = document.getElementById('btn-tally-votes');
@@ -764,7 +451,6 @@
         }
       }
 
-      // Render Mod Player Grid
       const modPlayerList = document.getElementById('mod-player-list');
       if (modPlayerList) {
         modPlayerList.innerHTML = '';
@@ -776,7 +462,6 @@
         });
       }
 
-      // 3. Render Player Interface
       if (localPlayer) {
         const roleBadge = document.getElementById('player-role-badge');
         if (roleBadge) {
@@ -841,5 +526,3 @@
       }
     }
   </script>
-</body>
-</html>
