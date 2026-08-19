@@ -14,6 +14,25 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
   
   <style>
+    /* Default Base Size */
+    html {
+      font-size: 16px;
+    }
+
+    /* Automatically applies a ~90% scale on 14-inch laptops and smaller screens */
+    @media (max-width: 1400px), (max-height: 850px) {
+      html {
+        font-size: 14.4px; 
+      }
+    }
+
+    /* Scales down further for screens with very little vertical height */
+    @media (max-height: 700px) {
+      html {
+        font-size: 12.5px;
+      }
+    }
+
     :root {
       /* Light, modern, attractive color palette */
       --bg-gradient: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
@@ -48,9 +67,9 @@
 
     .container {
       width: 100%;
-      max-width: 1200px;
+      max-width: 75rem; /* Converted from 1200px to allow scaling */
       height: 100%;
-      max-height: 850px;
+      max-height: 95vh; /* Changed from 850px to fit inside laptop screens */
       background: var(--card-bg);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
@@ -129,7 +148,7 @@
       margin-top: 1rem;
     }
 
-    .screen-left { display: flex; flex-direction: column; gap: 1.5rem; }
+    .screen-left { display: flex; flex-direction: column; gap: 1.5rem; overflow-y: auto; padding-right: 0.5rem; }
 
     .screen-right {
       display: flex; flex-direction: column; background: rgba(255, 255, 255, 0.6);
@@ -142,7 +161,7 @@
       background: #fff; padding: 2rem; border-radius: 16px; 
       border: 2px dashed rgba(2, 132, 199, 0.3); box-shadow: var(--shadow-soft); text-align: center;
     }
-    .qr-box img { border-radius: 12px; margin: 1rem 0; width: 160px; height: 160px; }
+    .qr-box img { border-radius: 12px; margin: 1rem 0; width: 10rem; height: 10rem; } /* Converted 160px to 10rem */
     .room-code-display { font-family: 'Montserrat', sans-serif; font-size: 3.5rem; font-weight: 800; color: var(--accent-blue); letter-spacing: 5px; line-height: 1; }
 
     .announcement {
@@ -152,7 +171,7 @@
     }
 
     .player-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem; margin-top: 1rem;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 0.75rem; margin-top: 1rem; /* Converted 130px to 8.5rem */
     }
     .player-card {
       background: #fff; padding: 1rem 0.5rem; border-radius: 12px; text-align: center;
