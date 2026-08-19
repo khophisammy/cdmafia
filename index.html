@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mafia Web Game</title>
+
+  <!-- ADD YOUR LOGO HERE: Change 'your-logo.png' to the name of your actual image file -->
+  <link rel="icon" href="mafia.png" type="image/png">
+  <link rel="apple-touch-icon" href="your-logo.png">
   
   <!-- PeerJS for Direct WebRTC Cross-Device Connections -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -67,9 +71,9 @@
 
     .container {
       width: 100%;
-      max-width: 75rem; /* Converted from 1200px to allow scaling */
+      max-width: 75rem; 
       height: 100%;
-      max-height: 95vh; /* Changed from 850px to fit inside laptop screens */
+      max-height: 95vh; 
       background: var(--card-bg);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
@@ -161,7 +165,7 @@
       background: #fff; padding: 2rem; border-radius: 16px; 
       border: 2px dashed rgba(2, 132, 199, 0.3); box-shadow: var(--shadow-soft); text-align: center;
     }
-    .qr-box img { border-radius: 12px; margin: 1rem 0; width: 10rem; height: 10rem; } /* Converted 160px to 10rem */
+    .qr-box img { border-radius: 12px; margin: 1rem 0; width: 10rem; height: 10rem; } 
     .room-code-display { font-family: 'Montserrat', sans-serif; font-size: 3.5rem; font-weight: 800; color: var(--accent-blue); letter-spacing: 5px; line-height: 1; }
 
     .announcement {
@@ -171,7 +175,7 @@
     }
 
     .player-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 0.75rem; margin-top: 1rem; /* Converted 130px to 8.5rem */
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 0.75rem; margin-top: 1rem;
     }
     .player-card {
       background: #fff; padding: 1rem 0.5rem; border-radius: 12px; text-align: center;
@@ -247,7 +251,7 @@
     <!-- 1. LANDING VIEW -->
     <div id="view-landing" style="display: flex; flex-direction: column; justify-content: center; flex: 1;">
       <h1>MAFIA</h1>
-      <p class="tagline">A game that shape our stories</p>
+      <p class="tagline">a game that shape our stories</p>
       
       <div style="display: flex; flex-direction: column; gap: 1.25rem; max-width: 400px; margin: 0 auto; width: 100%;">
         <button onclick="switchRole('screen')" style="padding: 1.2rem; font-size: 1.1rem;">🖥️ Open Main Display (Host)</button>
