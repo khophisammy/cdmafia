@@ -273,8 +273,24 @@
       .container { max-height: none; min-height: calc(100dvh - 2rem); height: auto; padding: 1.5rem; }
       .screen-layout { grid-template-columns: 1fr; overflow: visible; }
       .landing-admin-btn {
-        position: fixed; right: max(0.75rem, env(safe-area-inset-right));
-        bottom: max(0.75rem, env(safe-area-inset-bottom)); z-index: 1000;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: fixed !important;
+        right: max(1rem, env(safe-area-inset-right)) !important;
+        bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+        width: auto !important;
+        min-width: 4.5rem !important;
+        height: 2.25rem !important;
+        padding: 0.45rem 0.8rem !important;
+        background: #ffffff !important;
+        color: #102a43 !important;
+        border: 1px solid #d9e2ec !important;
+        border-radius: 999px !important;
+        box-shadow: 0 4px 14px rgba(16, 42, 67, 0.18) !important;
+        font-size: 0.7rem !important;
+        line-height: 1 !important;
+        z-index: 2147483647 !important;
       }
     }
   </style>
@@ -314,7 +330,8 @@
     <div id="view-screen" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
       <button class="btn-alt btn-home" onclick="goHome()">🏠 Back to Homepage</button>
       
-      <div class="audio-controls">
+      <div class="audio-controls" style="display:flex; gap:0.5rem;">
+        <button id="fullscreen-btn" onclick="toggleFullscreen()">⛶ Full Screen</button>
         <button id="mute-btn" onclick="toggleAudio()">🔊 Mute Music</button>
       </div>
 
@@ -556,6 +573,36 @@
       else el.style.color = 'var(--text-muted)';
     }
 
+    async function enterHostFullscreen() {
+      const page = document.documentElement;
+      try {
+        if (document.fullscreenElement || document.webkitFullscreenElement) return;
+        if (page.requestFullscreen) {
+          await page.requestFullscreen();
+        } else if (page.webkitRequestFullscreen) {
+          page.webkitRequestFullscreen();
+        } else {
+          updateStatus('⚠️ Fullscreen is not supported by this browser.');
+        }
+      } catch (error) {
+        console.warn('Fullscreen request was blocked:', error);
+        updateStatus('⚠️ Fullscreen was blocked. Tap Full Screen or use the browser menu.');
+      }
+    }
+
+    async function toggleFullscreen() {
+      try {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          if (document.exitFullscreen) await document.exitFullscreen();
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        } else {
+          await enterHostFullscreen();
+        }
+      } catch (error) {
+        console.warn('Could not change fullscreen mode:', error);
+      }
+    }
+
     function toggleAudio() {
       const audio = document.getElementById('bg-music');
       const btn = document.getElementById('mute-btn');
@@ -573,6 +620,7 @@
 
       if (role === 'screen') {
         isHost = true;
+        enterHostFullscreen();
         document.getElementById('view-screen').classList.remove('hidden');
         const bgAudio = document.getElementById('bg-music');
         bgAudio.volume = 0.4;
