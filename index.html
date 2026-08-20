@@ -456,7 +456,6 @@
     }
 
     function goHome() {
-      // Disconnect active peers / connections
       if (peer) {
         try { peer.destroy(); } catch(e) {}
         peer = null;
@@ -466,19 +465,16 @@
       playerConnections = [];
       localPlayerId = null;
 
-      // Stop background music if playing
       const audio = document.getElementById('bg-music');
       audio.pause();
       audio.currentTime = 0;
 
-      // Reset application state
       state = {
         roomCode: '', phase: 'LOBBY', players: [],
         moderatorId: null, mafiaId: null, mafiaTarget: null,
         votes: {}, announcement: 'Waiting for players to join...'
       };
 
-      // Reset UI visibility
       document.getElementById('view-landing').style.display = 'flex';
       document.getElementById('view-screen').classList.add('hidden');
       document.getElementById('view-moderator').classList.add('hidden');
@@ -487,7 +483,6 @@
       document.getElementById('player-active-panel').classList.add('hidden');
       document.getElementById('btn-join').disabled = false;
 
-      // Clear query params from URL
       window.history.replaceState({}, document.title, window.location.pathname);
       updateStatus('Waiting for selection...');
     }
@@ -732,17 +727,40 @@
       broadcastStateToAll();
     }
 
-    function startMafiaTurn() { if (hostConnection && hostConnection.open) hostConnection.send({ type: 'MOD_ACTION', action: 'START_MAFIA_TURN' }); }
-    function startDiscussionPhase() {
-      if (!state.mafiaTarget) return alert("Mafia hasn't chosen a target yet!");
-      if (hostConnection && hostConnection.open) hostConnection.send({ type: 'MOD_ACTION', action: 'START_DISCUSSION' });
+    // --- UPDATED MODERATOR & PLAYER ACTION FUNCTIONS ---
+    function startMafiaTurn() { 
+      if (hostConnection) {
+        hostConnection.send({ type: 'MOD_ACTION', action: 'START_MAFIA_TURN' }); 
+      } else {
+        alert("Error: Connection to host lost. Please refresh and rejoin.");
+      }
     }
+
+    function startDiscussionPhase() {
+      if (!state.mafiaTarget) return alert("The Mafia hasn't chosen a target yet!");
+      if (hostConnection) {
+        hostConnection.send({ type: 'MOD_ACTION', action: 'START_DISCUSSION' });
+      }
+    }
+
     function tallyVotes() {
       if (Object.keys(state.votes).length === 0) return alert('No votes have been cast yet!');
-      if (hostConnection && hostConnection.open) hostConnection.send({ type: 'MOD_ACTION', action: 'TALLY_VOTES' });
+      if (hostConnection) {
+        hostConnection.send({ type: 'MOD_ACTION', action: 'TALLY_VOTES' });
+      }
     }
-    function submitMafiaTarget(targetId) { if (hostConnection && hostConnection.open) hostConnection.send({ type: 'MAFIA_TARGET', targetId: targetId }); }
-    function submitVote(targetId) { if (hostConnection && hostConnection.open) hostConnection.send({ type: 'SUBMIT_VOTE', voterId: localPlayerId, targetId: targetId }); }
+
+    function submitMafiaTarget(targetId) { 
+      if (hostConnection) {
+        hostConnection.send({ type: 'MAFIA_TARGET', targetId: targetId }); 
+      }
+    }
+
+    function submitVote(targetId) { 
+      if (hostConnection) {
+        hostConnection.send({ type: 'SUBMIT_VOTE', voterId: localPlayerId, targetId: targetId }); 
+      }
+    }
 
     function getPhaseDisplayName(phase) {
       switch(phase) {
