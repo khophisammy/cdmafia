@@ -23,12 +23,17 @@
       font-size: 16px;
     }
 
-    @media (max-width: 1400px), (max-height: 850px) {
-      html { font-size: 14.4px; }
+    /* Compact desktop sizing for 14-inch laptops at 100% browser zoom. */
+    @media (max-width: 1600px), (max-height: 950px) {
+      html { font-size: 14px; }
+    }
+
+    @media (max-width: 1400px), (max-height: 820px) {
+      html { font-size: 12.8px; }
     }
 
     @media (max-height: 700px) {
-      html { font-size: 12.5px; }
+      html { font-size: 11.8px; }
     }
 
     :root {
@@ -144,6 +149,30 @@
       margin-bottom: 1rem; align-self: flex-start; display: inline-flex; align-items: center; gap: 0.4rem;
     }
 
+    .landing-admin-btn {
+      position: absolute;
+      right: 1.25rem;
+      bottom: 1.1rem;
+      width: auto !important;
+      padding: 0.45rem 0.8rem !important;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--text-muted);
+      border: 1px solid var(--card-item-border);
+      box-shadow: 0 3px 10px rgba(16, 42, 67, 0.08);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.7rem !important;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      z-index: 15;
+    }
+    .landing-admin-btn:hover {
+      color: var(--accent-blue);
+      border-color: rgba(2, 132, 199, 0.45);
+      background: #ffffff;
+      transform: translateY(-1px);
+    }
+
     .screen-layout {
       display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; flex: 1; overflow: hidden; margin-top: 1rem;
     }
@@ -181,7 +210,37 @@
       margin-top: 1rem; 
       max-height: 360px;
       overflow-y: auto;
-      padding-right: 0.3rem;
+      scrollbar-gutter: stable;
+      padding-right: 0.5rem;
+    }
+
+    /* Joined Players list: keep a visible scrolling area on the host screen. */
+    #screen-player-list {
+      min-height: 9rem;
+      max-height: 24rem;
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
+      align-content: start;
+      padding-right: 0.65rem;
+    }
+
+    /* Hide the scrollbar, but preserve mouse-wheel, trackpad, touch and keyboard scrolling. */
+    #screen-player-list {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      overscroll-behavior: contain;
+      scroll-behavior: smooth;
+      cursor: default;
+    }
+    #screen-player-list::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+    #screen-player-list:hover {
+      outline: 1px solid rgba(2, 132, 199, 0.18);
+      outline-offset: 3px;
+      border-radius: 10px;
     }
     
     .player-card {
@@ -203,7 +262,7 @@
     }
     .game-active-panel h3 { color: var(--accent-yellow); font-size: 1.8rem; }
 
-    .audio-controls { position: absolute; top: 1.5rem; right: 1.5rem; }
+    .audio-controls { position: absolute; top: 1.5rem; right: 1.5rem; display: flex; gap: 0.5rem; z-index: 20; }
     .audio-controls button {
       padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 50px; background: var(--card-item-bg);
       color: var(--text-main); box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 1px solid var(--card-item-border);
@@ -244,10 +303,48 @@
     .hidden { display: none !important; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+    /* Fit the complete game interface on common laptop screens without browser zooming. */
+    @media (min-width: 769px) and (max-height: 950px) {
+      body { padding: 0.65rem; }
+      .container {
+        max-width: 96rem;
+        max-height: calc(100dvh - 1.3rem);
+        padding: 1.25rem 1.5rem;
+        border-radius: 18px;
+      }
+      h1 { font-size: 2.45rem; margin-bottom: 0.25rem; }
+      h2 { font-size: 1.55rem; margin-bottom: 0.65rem; }
+      h3 { margin-bottom: 0.65rem; }
+      .tagline { margin-bottom: 1rem; }
+      .status-bar { padding: 0.5rem; margin-bottom: 0.55rem; }
+      .screen-layout { gap: 1rem; margin-top: 0.55rem; }
+      .screen-left { gap: 0.75rem; }
+      .screen-right { padding: 1rem; }
+      .qr-box { padding: 0.85rem 1rem; }
+      .qr-box img { width: 8rem; height: 8rem; margin: 0.4rem 0; }
+      .room-code-display { font-size: 2.65rem; }
+      .announcement { padding: 0.75rem; }
+      .player-grid { gap: 0.5rem; margin-top: 0.55rem; }
+      #screen-player-list {
+        min-height: 8rem;
+        height: clamp(10rem, 38vh, 22rem);
+        max-height: 22rem;
+        overflow-y: scroll;
+      }
+      .player-card { padding: 0.65rem 0.4rem; }
+      .audio-controls { top: 0.8rem; right: 1rem; }
+      .audio-controls button { padding: 0.4rem 0.7rem; }
+      .btn-home { margin-bottom: 0.45rem; }
+      .form-group { margin-bottom: 0.8rem; }
+      input, select, button { padding: 0.7rem 0.9rem; }
+      #moderator-selection-panel { margin-bottom: 0.8rem !important; padding: 0.8rem !important; }
+    }
+
     @media (max-width: 768px) {
       body { height: auto; overflow: auto; padding: 1rem; }
       .container { max-height: none; height: auto; padding: 1.5rem; }
       .screen-layout { grid-template-columns: 1fr; overflow: visible; }
+      #screen-player-list { height: auto; min-height: 8rem; max-height: 24rem; overflow-y: scroll; }
     }
   </style>
 </head>
@@ -278,7 +375,7 @@
         <button onclick="switchRole('screen')" style="padding: 1.2rem; font-size: 1.1rem;">🖥️ Open Main Display (Host)</button>
         <button onclick="switchRole('player')" class="btn-alt" style="padding: 1.2rem; font-size: 1.1rem;">📱 Join as Player</button>
         <!-- ADMIN LOGIN BUTTON -->
-        <button onclick="switchRole('admin-login')" class="btn-alt" style="padding: 0.8rem; font-size: 0.95rem; margin-top: 1rem;">⚙️ Admin Login</button>
+        <button onclick="requestAdminAccess()" class="landing-admin-btn" aria-label="Open administrator login">ADMIN</button>
       </div>
     </div>
 
@@ -287,6 +384,7 @@
       <button class="btn-alt btn-home" onclick="goHome()">🏠 Back to Homepage</button>
       
       <div class="audio-controls">
+        <button id="fullscreen-btn" onclick="toggleFullscreen()">⛶ Full Screen</button>
         <button id="mute-btn" onclick="toggleAudio()">🔊 Mute Music</button>
       </div>
 
@@ -338,7 +436,7 @@
           </div>
 
           <h3 style="text-align: left; font-size: 1.2rem;">Joined Players (<span id="player-count">0</span>)</h3>
-          <div id="screen-player-list" class="player-grid"></div>
+          <div id="screen-player-list" class="player-grid" tabindex="0" role="region" aria-label="Joined players. Scroll to view more players."></div>
         </div>
       </div>
     </div>
@@ -473,7 +571,7 @@
           <button onclick="adminSetTimer()" class="btn-purple" style="margin-top: 0.5rem;">Start Custom Timer</button>
         </div>
 
-        <hr style="border: 0; border-top: 1px solid var(--card-item-border); margin: 0.5rem 0;">
+        <div class="temp-admin-panel"><h3 style="color: var(--accent-purple);">Temporary Admin Access</h3><p style="text-align:center;color:var(--text-muted);margin-bottom:1rem;">Generate one temporary administrator login.</p><select id="temp-admin-expiry"><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60" selected>1 hour</option><option value="240">4 hours</option><option value="1440">24 hours</option></select><button onclick="generateTemporaryAdmin()" class="btn-purple" style="margin-top:.6rem;">Generate Temporary Login</button><div id="temp-admin-result" class="hidden" style="margin-top:1rem;text-align:center;"><p>Username: <strong id="temp-admin-username"></strong></p><p>Password: <strong id="temp-admin-password"></strong></p><p id="temp-admin-expiry-display" style="color:var(--text-muted);"></p><div style="display:flex;gap:.5rem;margin-top:.6rem;"><button onclick="copyTemporaryAdmin()" class="btn-alt">Copy Login</button><button onclick="revokeTemporaryAdmin()" class="btn-danger">Revoke</button></div></div><p id="temp-admin-status" style="text-align:center;margin-top:.6rem;color:var(--text-muted);"></p></div><hr style="border: 0; border-top: 1px solid var(--card-item-border); margin: 0.5rem 0;">
 
         <h3>Global Emergency Actions</h3>
         <button onclick="forceEndGameFromScreen()" class="btn-danger" style="padding: 1rem;">🛑 Force End Game & Return Lobby</button>
@@ -528,6 +626,50 @@
       else el.style.color = 'var(--text-muted)';
     }
 
+    async function enterFullscreen() {
+      const page = document.documentElement;
+      try {
+        if (document.fullscreenElement || document.webkitFullscreenElement) return true;
+        if (page.requestFullscreen) {
+          await page.requestFullscreen();
+        } else if (page.webkitRequestFullscreen) {
+          page.webkitRequestFullscreen();
+        } else {
+          updateStatus('⚠️ Fullscreen is not supported by this browser.');
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.warn('Fullscreen request was blocked:', error);
+        updateStatus('⚠️ Fullscreen was blocked. Use the Full Screen button or press F11.');
+        return false;
+      }
+    }
+
+    async function toggleFullscreen() {
+      try {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          if (document.exitFullscreen) await document.exitFullscreen();
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        } else {
+          await enterFullscreen();
+        }
+      } catch (error) {
+        console.warn('Could not change fullscreen mode:', error);
+      }
+    }
+
+    function updateFullscreenButton() {
+      const btn = document.getElementById('fullscreen-btn');
+      if (!btn) return;
+      const active = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+      btn.innerText = active ? '⛶ Exit Full Screen' : '⛶ Full Screen';
+    }
+
+    document.addEventListener('fullscreenchange', updateFullscreenButton);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+
+
     function toggleAudio() {
       const audio = document.getElementById('bg-music');
       const btn = document.getElementById('mute-btn');
@@ -545,6 +687,7 @@
 
       if (role === 'screen') {
         isHost = true;
+        enterFullscreen();
         document.getElementById('view-screen').classList.remove('hidden');
         const bgAudio = document.getElementById('bg-music');
         bgAudio.volume = 0.4;
@@ -564,13 +707,60 @@
       }
     }
 
+    const TEMP_ADMIN_KEY = 'mafiaTemporaryAdmin';
+    function getTemporaryAdmin() {
+      try {
+        const a = JSON.parse(localStorage.getItem(TEMP_ADMIN_KEY));
+        if (!a || Date.now() >= a.expiresAt) { localStorage.removeItem(TEMP_ADMIN_KEY); return null; }
+        return a;
+      } catch (e) { return null; }
+    }
+    function validateTemporaryAdmin(user, pass) {
+      const a = getTemporaryAdmin();
+      return !!(a && a.username === user && a.password === pass);
+    }
+    function secureRandom(length, chars) {
+      const values = new Uint32Array(length); crypto.getRandomValues(values);
+      return Array.from(values, v => chars[v % chars.length]).join('');
+    }
+    function generateTemporaryAdmin() {
+      const minutes = Number(document.getElementById('temp-admin-expiry').value) || 60;
+      const a = { username: 'Admin-' + secureRandom(6, 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'), password: secureRandom(14, 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%'), expiresAt: Date.now() + minutes * 60000 };
+      localStorage.setItem(TEMP_ADMIN_KEY, JSON.stringify(a));
+      document.getElementById('temp-admin-username').textContent = a.username;
+      document.getElementById('temp-admin-password').textContent = a.password;
+      document.getElementById('temp-admin-expiry-display').textContent = 'Valid until ' + new Date(a.expiresAt).toLocaleString();
+      document.getElementById('temp-admin-result').classList.remove('hidden');
+      document.getElementById('temp-admin-status').textContent = 'Temporary access is active.';
+    }
+    async function copyTemporaryAdmin() {
+      const a = getTemporaryAdmin(); if (!a) return revokeTemporaryAdmin();
+      const s = `Username: ${a.username}
+Password: ${a.password}
+Expires: ${new Date(a.expiresAt).toLocaleString()}`;
+      try { await navigator.clipboard.writeText(s); document.getElementById('temp-admin-status').textContent='Login copied.'; } catch(e) { prompt('Copy login:', s); }
+    }
+    function revokeTemporaryAdmin() {
+      localStorage.removeItem(TEMP_ADMIN_KEY);
+      document.getElementById('temp-admin-result').classList.add('hidden');
+      document.getElementById('temp-admin-status').textContent='Temporary access revoked or expired.';
+    }
+
+    function requestAdminAccess() {
+      const approved = confirm('Administrator access only. Do you want to continue to the Admin login?');
+      if (!approved) return;
+      switchRole('admin-login');
+    }
+
     function checkAdminLogin() {
       const user = document.getElementById('admin-user-input').value.trim();
       const pass = document.getElementById('admin-pass-input').value.trim();
       const room = document.getElementById('admin-room-input').value.trim().toUpperCase();
       const err = document.getElementById('admin-error-msg');
 
-      if (user === 'Sammy' && pass === '12345678') {
+      const permanentLogin = user === 'Sammy' && pass === '12345678';
+      const temporaryLogin = validateTemporaryAdmin(user, pass);
+      if (permanentLogin || temporaryLogin) {
         err.style.display = 'none';
         
         if (room && !isHost) {
