@@ -693,6 +693,14 @@
           document.getElementById('player-display-name').innerText = name;
         });
 
+        // INCOMING STATE LISTENER FOR PLAYER DEVICES
+        hostConnection.on('data', (msg) => {
+          if (msg.type === 'STATE_UPDATE') {
+            state = msg.state;
+            render();
+          }
+        });
+
         hostConnection.on('error', (err) => {
           clearTimeout(connectTimeout);
           updateStatus(`🔴 Connection error: ${err.message}`);
@@ -727,7 +735,6 @@
       broadcastStateToAll();
     }
 
-    // --- UPDATED MODERATOR & PLAYER ACTION FUNCTIONS ---
     function startMafiaTurn() { 
       if (hostConnection) {
         hostConnection.send({ type: 'MOD_ACTION', action: 'START_MAFIA_TURN' }); 
