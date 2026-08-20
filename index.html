@@ -249,28 +249,9 @@
       .container { max-height: none; height: auto; padding: 1.5rem; }
       .screen-layout { grid-template-columns: 1fr; overflow: visible; }
     }
-
-
-    /* Mobile connection recovery */
-    #reconnect-banner {
-      position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%);
-      z-index: 10000; width: min(92vw, 520px); padding: 0.9rem 1rem;
-      border-radius: 14px; background: #fff7ed; color: #9a3412;
-      border: 2px solid #f97316; box-shadow: 0 14px 30px rgba(0,0,0,0.18);
-      font-weight: 800; text-align: center;
-    }
-    #reconnect-banner.connected { background: #ecfdf5; color: #047857; border-color: #10b981; }
-    #reconnect-banner button { width: auto; margin-top: 0.65rem; padding: 0.55rem 1rem; }
-
   </style>
 </head>
 <body>
-
-  <div id="reconnect-banner" class="hidden" role="status" aria-live="polite">
-    <div id="reconnect-message">Connection paused. Reconnecting...</div>
-    <button id="reconnect-now-btn" type="button" onclick="manualReconnect()">Reconnect Now</button>
-  </div>
-
 
   <!-- BACKGROUND MUSIC -->
   <audio id="bg-music" loop>
@@ -291,7 +272,7 @@
     <!-- 1. LANDING VIEW -->
     <div id="view-landing" style="display: flex; flex-direction: column; justify-content: center; flex: 1;">
       <h1>MAFIA</h1>
-      <p class="tagline">A game that shape our stories</p>
+      <p class="tagline">a game that shape our stories</p>
       
       <div style="display: flex; flex-direction: column; gap: 1.25rem; max-width: 400px; margin: 0 auto; width: 100%;">
         <button onclick="switchRole('screen')" style="padding: 1.2rem; font-size: 1.1rem;">🖥️ Open Main Display (Host)</button>
@@ -506,16 +487,6 @@
     let playerConnections = []; let localPlayerId = null; let roomCode = '';
     let timerInterval = null; let isKickedOut = false;
 
-    // Mobile reconnection and screen-wake support
-    let reconnectTimer = null;
-    let reconnectAttempts = 0;
-    let reconnectInProgress = false;
-    let hiddenAt = 0;
-    let wakeLock = null;
-    let currentPlayerName = '';
-    let currentPlayerRoom = '';
-    const PLAYER_SESSION_KEY = 'mafiaPlayerSessionV2';
-
     const peerConfig = {
       config: {
         iceServers: [
@@ -547,229 +518,6 @@
       votes: {}, isTie: false, announcement: 'Waiting for players to join...',
       timer: 0, timerActive: false, eliminantsChat: []
     };
-
-    function savePlayerSession() {
-      if (!localPlayerId || !currentPlayerName || !currentPlayerRoom) return;
-      localStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify({
-        id: localPlayerId,
-        name: currentPlayerName,
-        room: currentPlayerRoom,
-        savedAt: Date.now()
-      }));
-    }
-
-    function loadPlayerSession() {
-      try {
-        const saved = JSON.parse(localStorage.getItem(PLAYER_SESSION_KEY) || 'null');
-        if (!saved || !saved.id || !saved.name || !saved.room) return null;
-        return saved;
-      } catch (e) {
-        return null;
-      }
-    }
-
-    function clearPlayerSession() {
-      localStorage.removeItem(PLAYER_SESSION_KEY);
-    }
-
-    function showReconnectBanner(message, connected = false) {
-      const banner = document.getElementById('reconnect-banner');
-      const messageEl = document.getElementById('reconnect-message');
-      const button = document.getElementById('reconnect-now-btn');
-      if (!banner || !messageEl) return;
-      messageEl.innerText = message;
-      banner.classList.remove('hidden', 'connected');
-      if (connected) banner.classList.add('connected');
-      if (button) button.classList.toggle('hidden', connected);
-      if (connected) setTimeout(hideReconnectBanner, 1800);
-    }
-
-    function hideReconnectBanner() {
-      const banner = document.getElementById('reconnect-banner');
-      if (banner) banner.classList.add('hidden');
-    }
-
-    async function requestWakeLock() {
-      try {
-        if ('wakeLock' in navigator && document.visibilityState === 'visible' && !wakeLock) {
-          wakeLock = await navigator.wakeLock.request('screen');
-          wakeLock.addEventListener('release', () => { wakeLock = null; });
-        }
-      } catch (error) {
-        console.log('Screen wake lock was not available:', error);
-      }
-    }
-
-    function releaseWakeLock() {
-      if (wakeLock) {
-        wakeLock.release().catch(() => {});
-        wakeLock = null;
-      }
-    }
-
-    function reconnectDelay() {
-      return Math.min(1000 * Math.pow(1.7, reconnectAttempts), 10000);
-    }
-
-    function scheduleReconnect(force = false) {
-      if (isHost || isKickedOut || !localPlayerId || !currentPlayerRoom) return;
-      if (!navigator.onLine) {
-        showReconnectBanner('Your phone is offline. Reconnection will continue when internet returns.');
-        updateStatus('🔴 Offline. Waiting for internet...');
-        return;
-      }
-      if (!force && hostConnection && hostConnection.open) return;
-      clearTimeout(reconnectTimer);
-      showReconnectBanner('Connection paused. Reconnecting to room ' + currentPlayerRoom + '...');
-      reconnectTimer = setTimeout(reconnectPlayer, force ? 150 : reconnectDelay());
-    }
-
-    function bindReconnectedPlayerConnection(conn, playerRecord) {
-      hostConnection = conn;
-
-      conn.on('open', () => {
-        reconnectInProgress = false;
-        reconnectAttempts = 0;
-        isKickedOut = false;
-        savePlayerSession();
-        requestWakeLock();
-        updateStatus(`🟢 Reconnected to Room ${currentPlayerRoom}!`, true);
-        showReconnectBanner('Reconnected successfully!', true);
-        conn.send({ type: 'JOIN_REQUEST', player: playerRecord });
-        document.getElementById('player-login-form').classList.add('hidden');
-        document.getElementById('player-active-panel').classList.remove('hidden');
-        document.getElementById('player-display-name').innerText = currentPlayerName;
-      });
-
-      conn.on('data', (msg) => {
-        if (msg.type === 'STATE_UPDATE') {
-          state = msg.state;
-          render();
-        } else if (msg.type === 'HOST_DISCONNECTED') {
-          isKickedOut = true;
-          clearTimeout(reconnectTimer);
-          clearPlayerSession();
-          alert(msg.reason || '⚠️ The host regenerated the room code. Please enter the new code to rejoin.');
-          goHome();
-        }
-      });
-
-      conn.on('close', () => {
-        if (hostConnection === conn) hostConnection = null;
-        reconnectInProgress = false;
-        if (!isKickedOut && localPlayerId) {
-          updateStatus('⚠️ Connection paused. Trying to reconnect...');
-          scheduleReconnect(true);
-        }
-      });
-
-      conn.on('error', (err) => {
-        console.log('Player reconnection error:', err);
-        if (hostConnection === conn) hostConnection = null;
-        reconnectInProgress = false;
-        reconnectAttempts++;
-        scheduleReconnect();
-      });
-    }
-
-    function reconnectPlayer() {
-      if (reconnectInProgress || isHost || isKickedOut || !localPlayerId || !currentPlayerRoom) return;
-      if (!navigator.onLine) return scheduleReconnect();
-
-      reconnectInProgress = true;
-      reconnectAttempts++;
-      updateStatus(`Reconnecting to room ${currentPlayerRoom}...`);
-
-      if (hostConnection) {
-        try { hostConnection.close(); } catch (e) {}
-        hostConnection = null;
-      }
-      if (peer) {
-        try { peer.destroy(); } catch (e) {}
-        peer = null;
-      }
-
-      try {
-        peer = new Peer(peerConfig);
-      } catch (err) {
-        reconnectInProgress = false;
-        scheduleReconnect();
-        return;
-      }
-
-      let finished = false;
-      const attemptTimeout = setTimeout(() => {
-        if (!finished) {
-          reconnectInProgress = false;
-          try { peer.destroy(); } catch (e) {}
-          scheduleReconnect();
-        }
-      }, 9000);
-
-      peer.on('open', () => {
-        const targetId = `mafia-cd-${currentPlayerRoom.toLowerCase()}`;
-        const conn = peer.connect(targetId, { reliable: true });
-        conn.on('open', () => {
-          finished = true;
-          clearTimeout(attemptTimeout);
-        });
-        bindReconnectedPlayerConnection(conn, {
-          id: localPlayerId,
-          name: currentPlayerName,
-          isAlive: true,
-          isMafia: false,
-          isModerator: false
-        });
-      });
-
-      peer.on('error', (err) => {
-        console.log('Peer reconnect error:', err);
-        clearTimeout(attemptTimeout);
-        reconnectInProgress = false;
-        scheduleReconnect();
-      });
-    }
-
-    function manualReconnect() {
-      reconnectAttempts = 0;
-      reconnectInProgress = false;
-      scheduleReconnect(true);
-    }
-
-    function resumeSavedPlayerSession() {
-      const saved = loadPlayerSession();
-      if (!saved) return false;
-      localPlayerId = saved.id;
-      currentPlayerName = saved.name;
-      currentPlayerRoom = saved.room.toUpperCase();
-      document.getElementById('player-name-input').value = currentPlayerName;
-      document.getElementById('player-room-input').value = currentPlayerRoom;
-      document.getElementById('player-display-name').innerText = currentPlayerName;
-      document.getElementById('player-login-form').classList.add('hidden');
-      document.getElementById('player-active-panel').classList.remove('hidden');
-      scheduleReconnect(true);
-      return true;
-    }
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') {
-        hiddenAt = Date.now();
-      } else {
-        requestWakeLock();
-        if (localPlayerId && !isHost && (Date.now() - hiddenAt > 3000 || !hostConnection || !hostConnection.open)) {
-          scheduleReconnect(true);
-        }
-      }
-    });
-
-    window.addEventListener('online', () => scheduleReconnect(true));
-    window.addEventListener('offline', () => {
-      showReconnectBanner('Your phone is offline. Waiting for internet...');
-      updateStatus('🔴 Offline. Waiting for internet...');
-    });
-    window.addEventListener('pageshow', () => {
-      if (localPlayerId && !isHost) scheduleReconnect(true);
-    });
 
     function updateStatus(msg, isSuccess = false) {
       const el = document.getElementById('connection-status');
@@ -808,13 +556,7 @@
         document.getElementById('view-player').classList.remove('hidden');
         const urlParams = new URLSearchParams(window.location.search);
         const codeFromUrl = urlParams.get('code');
-        if (codeFromUrl) {
-          document.getElementById('player-room-input').value = codeFromUrl.toUpperCase();
-          const saved = loadPlayerSession();
-          if (saved && saved.room.toUpperCase() === codeFromUrl.toUpperCase()) resumeSavedPlayerSession();
-        } else {
-          resumeSavedPlayerSession();
-        }
+        if (codeFromUrl) document.getElementById('player-room-input').value = codeFromUrl.toUpperCase();
       } else if (role === 'admin-login') {
         document.getElementById('view-admin-login').classList.remove('hidden');
       } else if (role === 'admin-dashboard') {
@@ -915,14 +657,6 @@
 
     function goHome() {
       isKickedOut = false; // Reset the kicked state
-      clearTimeout(reconnectTimer);
-      reconnectInProgress = false;
-      reconnectAttempts = 0;
-      releaseWakeLock();
-      clearPlayerSession();
-      hideReconnectBanner();
-      currentPlayerName = '';
-      currentPlayerRoom = '';
       
       if (peer) {
         try { peer.destroy(); } catch(e) {}
@@ -1368,13 +1102,7 @@
       joinBtn.disabled = true;
       updateStatus(`Connecting to room ${inputCode}...`);
 
-      currentPlayerName = name;
-      currentPlayerRoom = inputCode;
-      const savedSession = loadPlayerSession();
-      localPlayerId = (savedSession && savedSession.name.toLowerCase() === name.toLowerCase() && savedSession.room.toUpperCase() === inputCode)
-        ? savedSession.id
-        : 'p_' + Math.random().toString(36).substr(2, 9);
-      savePlayerSession();
+      localPlayerId = 'p_' + Math.random().toString(36).substr(2, 9);
       const newPlayer = { id: localPlayerId, name: name, isAlive: true, isMafia: false, isModerator: false };
 
       if (peer) { try { peer.destroy(); } catch(e) {} }
@@ -1397,9 +1125,6 @@
         hostConnection.on('open', () => {
           clearTimeout(connectTimeout);
           isKickedOut = false;
-          reconnectAttempts = 0;
-          savePlayerSession();
-          requestWakeLock();
           updateStatus(`🟢 Connected to Room ${inputCode}!`, true);
           hostConnection.send({ type: 'JOIN_REQUEST', player: newPlayer });
           document.getElementById('player-login-form').classList.add('hidden');
@@ -1418,21 +1143,18 @@
           }
         });
 
-        /* MOBILE FIX: Keep the session and reconnect instead of returning home. */
+        /* FIX: IF CONNECTION DROPS UNEXPECTEDLY, ALERT THE USER */
         hostConnection.on('close', () => {
-          hostConnection = null;
-          reconnectInProgress = false;
+          updateStatus('🔴 Disconnected from host server.');
           if (!isKickedOut && localPlayerId) {
-            updateStatus('⚠️ Connection paused. Trying to reconnect...');
-            scheduleReconnect(true);
+            alert("⚠️ Connection to the host was lost. The room may have been closed or regenerated.");
+            goHome();
           }
         });
 
         hostConnection.on('error', (err) => {
           clearTimeout(connectTimeout);
-          updateStatus(`🔴 Connection error: ${err.message}`);
-          joinBtn.disabled = false;
-          if (localPlayerId && currentPlayerRoom) scheduleReconnect();
+          updateStatus(`🔴 Connection error: ${err.message}`); joinBtn.disabled = false;
         });
       });
 
