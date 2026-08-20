@@ -4,10 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mafia Web Game</title>
-
-  <!-- ADD YOUR LOGO HERE: Change 'your-logo.png' to the name of your actual image file -->
-  <link rel="icon" href="mafia.png" type="image/png">
-  <link rel="apple-touch-icon" href="mafia.png">
   
   <!-- PeerJS for Direct WebRTC Cross-Device Connections -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -18,25 +14,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
   
   <style>
-    /* Default Base Size */
-    html {
-      font-size: 16px;
-    }
-
-    /* Automatically applies a ~90% scale on 14-inch laptops and smaller screens */
-    @media (max-width: 1400px), (max-height: 850px) {
-      html {
-        font-size: 14.4px; 
-      }
-    }
-
-    /* Scales down further for screens with very little vertical height */
-    @media (max-height: 700px) {
-      html {
-        font-size: 12.5px;
-      }
-    }
-
     :root {
       /* Light, modern, attractive color palette */
       --bg-gradient: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
@@ -71,9 +48,9 @@
 
     .container {
       width: 100%;
-      max-width: 75rem; 
+      max-width: 1200px;
       height: 100%;
-      max-height: 95vh; 
+      max-height: 850px;
       background: var(--card-bg);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
@@ -152,7 +129,7 @@
       margin-top: 1rem;
     }
 
-    .screen-left { display: flex; flex-direction: column; gap: 1.5rem; overflow-y: auto; padding-right: 0.5rem; }
+    .screen-left { display: flex; flex-direction: column; gap: 1.5rem; }
 
     .screen-right {
       display: flex; flex-direction: column; background: rgba(255, 255, 255, 0.6);
@@ -165,7 +142,7 @@
       background: #fff; padding: 2rem; border-radius: 16px; 
       border: 2px dashed rgba(2, 132, 199, 0.3); box-shadow: var(--shadow-soft); text-align: center;
     }
-    .qr-box img { border-radius: 12px; margin: 1rem 0; width: 10rem; height: 10rem; } 
+    .qr-box img { border-radius: 12px; margin: 1rem 0; width: 160px; height: 160px; }
     .room-code-display { font-family: 'Montserrat', sans-serif; font-size: 3.5rem; font-weight: 800; color: var(--accent-blue); letter-spacing: 5px; line-height: 1; }
 
     .announcement {
@@ -175,7 +152,7 @@
     }
 
     .player-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 0.75rem; margin-top: 1rem;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem; margin-top: 1rem;
     }
     .player-card {
       background: #fff; padding: 1rem 0.5rem; border-radius: 12px; text-align: center;
@@ -251,7 +228,7 @@
     <!-- 1. LANDING VIEW -->
     <div id="view-landing" style="display: flex; flex-direction: column; justify-content: center; flex: 1;">
       <h1>MAFIA</h1>
-      <p class="tagline">A game that shape our stories</p>
+      <p class="tagline">a game that shape our stories</p>
       
       <div style="display: flex; flex-direction: column; gap: 1.25rem; max-width: 400px; margin: 0 auto; width: 100%;">
         <button onclick="switchRole('screen')" style="padding: 1.2rem; font-size: 1.1rem;">🖥️ Open Main Display (Host)</button>
@@ -373,21 +350,12 @@
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
           { urls: 'stun:stun1.l.google.com:19302' },
-          {
-            urls: 'turn:standard.relay.metered.ca:80',
-            username: 'cef5c0fbf10275abea7f5600',
-            credential: 'CTFLI42cWOznlz+B'
-          },
-          {
-            urls: 'turn:standard.relay.metered.ca:443',
-            username: 'cef5c0fbf10275abea7f5600',
-            credential: 'CTFLI42cWOznlz+B'
-          },
-          {
-            urls: 'turn:standard.relay.metered.ca:443?transport=tcp',
-            username: 'cef5c0fbf10275abea7f5600',
-            credential: 'CTFLI42cWOznlz+B'
-          }
+          { urls: 'stun:stun2.l.google.com:19302' }
+          /* 
+            Note: If playing across strict mobile data / networks where direct STUN fails,
+            add your TURN relay server configuration here:
+            { urls: 'turn:your-turn-server.com:3478', username: 'user', credential: 'password' }
+          */
         ]
       },
       debug: 2 
