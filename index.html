@@ -23,22 +23,15 @@
       font-size: 16px;
     }
 
-    /* Automatically applies a ~90% scale on 14-inch laptops and smaller screens */
     @media (max-width: 1400px), (max-height: 850px) {
-      html {
-        font-size: 14.4px; 
-      }
+      html { font-size: 14.4px; }
     }
 
-    /* Scales down further for screens with very little vertical height */
     @media (max-height: 700px) {
-      html {
-        font-size: 12.5px;
-      }
+      html { font-size: 12.5px; }
     }
 
     :root {
-      /* Light, modern, attractive color palette */
       --bg-gradient: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
       --card-bg: rgba(255, 255, 255, 0.85);
       --card-border: rgba(255, 255, 255, 0.5);
@@ -56,7 +49,6 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* NO SCROLL DESKTOP LAYOUT */
     body {
       font-family: 'Nunito', sans-serif;
       background: var(--bg-gradient);
@@ -98,11 +90,8 @@
     h3 { font-size: 1.3rem; margin-bottom: 1rem; color: var(--text-main); }
 
     .tagline {
-      text-align: center;
-      font-size: 1.2rem;
-      color: var(--text-muted);
-      margin-bottom: 2rem;
-      font-weight: 600;
+      text-align: center; font-size: 1.2rem; color: var(--text-muted);
+      margin-bottom: 2rem; font-weight: 600;
     }
 
     .badge { 
@@ -142,33 +131,21 @@
     button.btn-danger:hover { box-shadow: 0 6px 20px rgba(225, 29, 72, 0.4); }
     button.btn-alt { background: #fff; color: var(--text-main); border: 2px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
     button.btn-alt:hover { border-color: var(--text-muted); }
+    button.btn-success { background: var(--accent-green); box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3); }
+    button.btn-success:hover { box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4); }
 
     .btn-home {
-      width: auto !important;
-      padding: 0.5rem 1rem !important;
-      font-size: 0.85rem !important;
-      margin-bottom: 1rem;
-      align-self: flex-start;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
+      width: auto !important; padding: 0.5rem 1rem !important; font-size: 0.85rem !important;
+      margin-bottom: 1rem; align-self: flex-start; display: inline-flex; align-items: center; gap: 0.4rem;
     }
 
     .screen-layout {
-      display: grid;
-      grid-template-columns: 1fr 1.5fr;
-      gap: 2rem;
-      flex: 1;
-      overflow: hidden;
-      margin-top: 1rem;
+      display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; flex: 1; overflow: hidden; margin-top: 1rem;
     }
-
     .screen-left { display: flex; flex-direction: column; gap: 1.5rem; overflow-y: auto; padding-right: 0.5rem; }
-
     .screen-right {
       display: flex; flex-direction: column; background: rgba(255, 255, 255, 0.6);
-      border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(0,0,0,0.05);
-      overflow-y: auto;
+      border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(0,0,0,0.05); overflow-y: auto;
     }
 
     .qr-box {
@@ -185,9 +162,8 @@
       border: 1px solid rgba(2, 132, 199, 0.2); color: var(--accent-blue);
     }
 
-    .player-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 0.75rem; margin-top: 1rem;
-    }
+    .player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+    
     .player-card {
       background: #fff; padding: 1rem 0.5rem; border-radius: 12px; text-align: center;
       border: 1px solid #e2e8f0; font-weight: 700; color: var(--text-main);
@@ -202,8 +178,7 @@
     .game-active-panel {
       background: #fff; padding: 2rem 1rem; border-radius: 16px;
       text-align: center; border: 2px solid var(--accent-yellow); box-shadow: var(--shadow-soft);
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
-      height: 100%;
+      display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%;
     }
     .game-active-panel h3 { color: var(--accent-yellow); font-size: 1.8rem; }
 
@@ -215,8 +190,7 @@
 
     #big-popup {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(16, 42, 67, 0.92); z-index: 9999;
-      display: flex; justify-content: center; align-items: center;
+      background: rgba(16, 42, 67, 0.92); z-index: 9999; display: flex; justify-content: center; align-items: center;
       opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
     }
     #big-popup.show { opacity: 1; pointer-events: auto; }
@@ -297,7 +271,7 @@
               <strong id="current-phase-display" style="color: var(--accent-blue); font-size: 1.8rem;">Lobby</strong>
             </p>
             
-            <div id="screen-action-status" style="margin-top: 1rem; width: 100%; padding: 0.85rem; border-radius: 10px; background: rgba(225, 29, 72, 0.08); border: 1px solid var(--accent-red); color: var(--accent-red); font-weight: 700; font-size: 0.95rem;">
+            <div id="screen-action-status" class="hidden" style="margin-top: 1rem; width: 100%; padding: 0.85rem; border-radius: 10px; background: rgba(225, 29, 72, 0.08); border: 1px solid var(--accent-red); color: var(--accent-red); font-weight: 700; font-size: 0.95rem;">
               🌙 Night Phase: Waiting for the Mafia to choose...
             </div>
           </div>
@@ -311,7 +285,7 @@
                 <option value="">-- Waiting for players... --</option>
               </select>
             </div>
-            <button onclick="assignModerator()" style="background: var(--accent-green); box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);">
+            <button onclick="assignModerator()" class="btn-success">
               Lock Lobby & Confirm Moderator
             </button>
           </div>
@@ -338,9 +312,12 @@
       </div>
 
       <div id="mod-controls" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
-        <button id="btn-start-game" onclick="startMafiaTurn()">Start Game (Night Phase)</button>
-        <button id="btn-start-discussion" class="hidden" onclick="startDiscussionPhase()">Begin Discussion & Voting Phase</button>
-        <button id="btn-tally-votes" class="hidden btn-danger" onclick="tallyVotes()">Tally Votes & Reveal Result</button>
+        <button id="btn-start-game" onclick="startFirstDiscussion()">Start Game (Discussion Phase)</button>
+        
+        <button id="btn-end-night" class="hidden btn-success" onclick="startDiscussionPhase()">End Night & Wake Up Town</button>
+        
+        <button id="btn-tally-votes" class="hidden btn-danger" onclick="tallyVotes()">Tally Votes & Eliminate</button>
+        <button id="btn-skip-vote" class="hidden btn-alt" onclick="startMafiaTurn()">Skip Vote (Go to Night Phase)</button>
       </div>
 
       <h3 style="margin-top: 2rem;">Player Status</h3>
@@ -413,7 +390,7 @@
     let state = {
       roomCode: '', phase: 'LOBBY', players: [],
       moderatorId: null, mafiaId: null, mafiaTarget: null,
-      votes: {}, announcement: 'Waiting for players to join...'
+      votes: {}, isTie: false, announcement: 'Waiting for players to join...'
     };
 
     function updateStatus(msg, isSuccess = false) {
@@ -460,19 +437,15 @@
         try { peer.destroy(); } catch(e) {}
         peer = null;
       }
-      isHost = false;
-      hostConnection = null;
-      playerConnections = [];
-      localPlayerId = null;
+      isHost = false; hostConnection = null; playerConnections = []; localPlayerId = null;
 
       const audio = document.getElementById('bg-music');
-      audio.pause();
-      audio.currentTime = 0;
+      audio.pause(); audio.currentTime = 0;
 
       state = {
         roomCode: '', phase: 'LOBBY', players: [],
         moderatorId: null, mafiaId: null, mafiaTarget: null,
-        votes: {}, announcement: 'Waiting for players to join...'
+        votes: {}, isTie: false, announcement: 'Waiting for players to join...'
       };
 
       document.getElementById('view-landing').style.display = 'flex';
@@ -493,8 +466,7 @@
       const titleEl = document.getElementById('popup-title');
       const subtitleEl = document.getElementById('popup-subtitle');
 
-      titleEl.innerText = title;
-      titleEl.style.color = color;
+      titleEl.innerText = title; titleEl.style.color = color;
       subtitleEl.innerText = subtitle;
 
       popup.classList.remove('hidden');
@@ -544,15 +516,12 @@
       updateStatus(`Initializing Server (${roomCode})...`);
       const hostId = `mafia-cd-${roomCode.toLowerCase()}`;
       
-      if (peer) {
-        try { peer.destroy(); } catch(e) {}
-      }
+      if (peer) { try { peer.destroy(); } catch(e) {} }
 
       try {
         peer = new Peer(hostId, peerConfig);
       } catch (err) {
-        updateStatus(`🔴 Initialization Error: ${err.message}`);
-        return;
+        updateStatus(`🔴 Initialization Error: ${err.message}`); return;
       }
 
       peer.on('open', () => {
@@ -592,51 +561,129 @@
       } 
       else if (msg.type === 'SUBMIT_VOTE') {
         state.votes[msg.voterId] = msg.targetId;
+
+        // Check if all eligible voting members have submitted their votes
+        const eligibleVoters = state.players.filter(p => p.isAlive && !p.isModerator);
+        const votedCount = Object.keys(state.votes).length;
+
+        if (votedCount >= eligibleVoters.length && eligibleVoters.length > 0) {
+          const voteCounts = {};
+          Object.values(state.votes).forEach(tId => { voteCounts[tId] = (voteCounts[tId] || 0) + 1; });
+
+          let highest = 0;
+          let isTie = false;
+          for (const count of Object.values(voteCounts)) {
+            if (count > highest) {
+              highest = count;
+              isTie = false;
+            } else if (count === highest) {
+              isTie = true;
+            }
+          }
+          state.isTie = isTie;
+        } else {
+          state.isTie = false;
+        }
+
         broadcastStateToAll();
       } 
       else if (msg.type === 'MOD_ACTION') {
-        if (msg.action === 'START_MAFIA_TURN') {
+        
+        if (msg.action === 'START_FIRST_DISCUSSION') {
+          state.phase = 'DAY_VOTING';
+          state.mafiaTarget = null;
+          state.votes = {};
+          state.isTie = false;
+          state.announcement = "☀️ The game has started! Introduce yourselves and discuss.";
+          showBigPopup("GAME START", "Introduce yourselves and discuss your suspicions!", "var(--accent-blue)");
+          broadcastStateToAll();
+        } 
+        else if (msg.action === 'START_MAFIA_TURN') {
           state.phase = 'NIGHT_MAFIA';
           state.mafiaTarget = null;
           state.votes = {};
-          state.announcement = "NIGHT PHASE: The Mafia is choosing a target...";
+          state.isTie = false;
+          state.announcement = "🌙 NIGHT PHASE: The Mafia is choosing a target...";
           showBigPopup("NIGHT FALLS", "The Mafia is making their secret move...", "var(--text-main)");
           broadcastStateToAll();
         } 
         else if (msg.action === 'START_DISCUSSION') {
-          if (!state.mafiaTarget) return;
-          const target = state.players.find(p => p.id === state.mafiaTarget);
-          if (target) {
-            target.isAlive = false;
+          if (state.mafiaTarget) {
+            const target = state.players.find(p => p.id === state.mafiaTarget);
+            if (target) {
+              target.isAlive = false;
+              if (!checkWinConditions()) {
+                state.phase = 'DAY_VOTING';
+                state.votes = {};
+                state.isTie = false;
+                state.announcement = `${target.name} was eliminated! Discuss and cast your votes.`;
+                showBigPopup("DAY BREAK", `${target.name} was taken out during the night.`, "var(--accent-blue)");
+              }
+            }
+          } else {
             if (!checkWinConditions()) {
               state.phase = 'DAY_VOTING';
-              state.announcement = `${target.name} was eliminated! Discuss and cast your votes.`;
-              showBigPopup("DAY BREAK", `${target.name} was taken out during the night. Discussion & Voting has begun!`, "var(--accent-blue)");
+              state.votes = {};
+              state.isTie = false;
+              state.announcement = `The town woke up. No one was eliminated! Discuss and cast your votes.`;
+              showBigPopup("DAY BREAK", `It's a peaceful morning. No one died.`, "var(--accent-blue)");
             }
           }
           broadcastStateToAll();
         } 
         else if (msg.action === 'TALLY_VOTES') {
+          const eligibleVoters = state.players.filter(p => p.isAlive && !p.isModerator);
+          const votedCount = Object.keys(state.votes).length;
+
+          // Require all members to vote before tallying
+          if (votedCount < eligibleVoters.length) {
+            alert(`Waiting for all players to vote (${votedCount}/${eligibleVoters.length} voted so far).`);
+            return;
+          }
+
           const voteCounts = {};
           Object.values(state.votes).forEach(targetId => { voteCounts[targetId] = (voteCounts[targetId] || 0) + 1; });
 
-          let highestVotes = 0; let eliminatedId = null;
+          let highestVotes = 0; 
+          let eliminatedId = null; 
+          let isTie = false;
+
           for (const [targetId, count] of Object.entries(voteCounts)) {
-            if (count > highestVotes) { highestVotes = count; eliminatedId = targetId; }
+            if (count > highestVotes) { 
+              highestVotes = count; 
+              eliminatedId = targetId; 
+              isTie = false; 
+            } else if (count === highestVotes) { 
+              isTie = true; 
+            }
           }
 
-          if (!eliminatedId) return;
-          const eliminatedPlayer = state.players.find(p => p.id === eliminatedId);
-          if (eliminatedPlayer) eliminatedPlayer.isAlive = false;
-
-          if (!checkWinConditions()) {
-            state.announcement = `${eliminatedPlayer ? eliminatedPlayer.name : 'Someone'} was eliminated by vote!`;
-            state.phase = 'NIGHT_MAFIA';
-            state.mafiaTarget = null;
+          // IF THERE IS A TIE: RESET VOTES & REQUIRE REVOTE
+          if (isTie) {
             state.votes = {};
-            showBigPopup("VOTED OUT", `${eliminatedPlayer ? eliminatedPlayer.name : 'Someone'} has been banished by the town!`, "var(--accent-yellow)");
+            state.isTie = false;
+            state.phase = 'DAY_VOTING';
+            state.announcement = "⚖️ The vote resulted in a tie! Everyone must vote again.";
+            broadcastStateToAll();
+            return;
+          } 
+          // CLEAR WINNER: ELIMINATE PLAYER
+          else if (eliminatedId) {
+            const eliminatedPlayer = state.players.find(p => p.id === eliminatedId);
+            if (eliminatedPlayer) {
+              eliminatedPlayer.isAlive = false;
+              state.announcement = `${eliminatedPlayer.name} was eliminated by vote!`;
+              showBigPopup("VOTED OUT", `${eliminatedPlayer.name} has been banished!`, "var(--accent-yellow)");
+            }
+
+            if (!checkWinConditions()) {
+              state.phase = 'NIGHT_MAFIA';
+              state.mafiaTarget = null;
+              state.votes = {};
+              state.isTie = false;
+            }
+            broadcastStateToAll();
           }
-          broadcastStateToAll();
         }
       }
     }
@@ -661,16 +708,10 @@
       localPlayerId = 'p_' + Math.random().toString(36).substr(2, 9);
       const newPlayer = { id: localPlayerId, name: name, isAlive: true, isMafia: false, isModerator: false };
 
-      if (peer) {
-        try { peer.destroy(); } catch(e) {}
-      }
+      if (peer) { try { peer.destroy(); } catch(e) {} }
 
-      try {
-        peer = new Peer(peerConfig);
-      } catch (err) {
-        updateStatus(`🔴 Error: ${err.message}`);
-        joinBtn.disabled = false;
-        return;
+      try { peer = new Peer(peerConfig); } catch (err) {
+        updateStatus(`🔴 Error: ${err.message}`); joinBtn.disabled = false; return;
       }
 
       peer.on('open', () => {
@@ -693,24 +734,18 @@
           document.getElementById('player-display-name').innerText = name;
         });
 
-        // INCOMING STATE LISTENER FOR PLAYER DEVICES
         hostConnection.on('data', (msg) => {
-          if (msg.type === 'STATE_UPDATE') {
-            state = msg.state;
-            render();
-          }
+          if (msg.type === 'STATE_UPDATE') { state = msg.state; render(); }
         });
 
         hostConnection.on('error', (err) => {
           clearTimeout(connectTimeout);
-          updateStatus(`🔴 Connection error: ${err.message}`);
-          joinBtn.disabled = false;
+          updateStatus(`🔴 Connection error: ${err.message}`); joinBtn.disabled = false;
         });
       });
 
       peer.on('error', (err) => {
-        updateStatus(`🔴 Peer error: [${err.type}] ${err.message}`);
-        joinBtn.disabled = false;
+        updateStatus(`🔴 Peer error: [${err.type}] ${err.message}`); joinBtn.disabled = false;
       });
     }
 
@@ -731,42 +766,36 @@
         p.isMafia = (p.id === state.mafiaId);
       });
 
-      state.announcement = "Moderator assigned. Waiting for them to start the game...";
+      state.announcement = "Moderator assigned. Waiting for them to start the discussion...";
       broadcastStateToAll();
     }
 
+    function startFirstDiscussion() {
+      if (hostConnection) { hostConnection.send({ type: 'MOD_ACTION', action: 'START_FIRST_DISCUSSION' }); }
+      else { alert("Error: Connection to host lost."); }
+    }
+
     function startMafiaTurn() { 
-      if (hostConnection) {
-        hostConnection.send({ type: 'MOD_ACTION', action: 'START_MAFIA_TURN' }); 
-      } else {
-        alert("Error: Connection to host lost. Please refresh and rejoin.");
-      }
+      if (hostConnection) { hostConnection.send({ type: 'MOD_ACTION', action: 'START_MAFIA_TURN' }); } 
     }
 
     function startDiscussionPhase() {
-      if (!state.mafiaTarget) return alert("The Mafia hasn't chosen a target yet!");
-      if (hostConnection) {
-        hostConnection.send({ type: 'MOD_ACTION', action: 'START_DISCUSSION' });
+      if (!state.mafiaTarget) {
+        if (!confirm("The Mafia hasn't chosen a target yet! Wake town anyway? (No one dies)")) return;
       }
+      if (hostConnection) { hostConnection.send({ type: 'MOD_ACTION', action: 'START_DISCUSSION' }); }
     }
 
     function tallyVotes() {
-      if (Object.keys(state.votes).length === 0) return alert('No votes have been cast yet!');
-      if (hostConnection) {
-        hostConnection.send({ type: 'MOD_ACTION', action: 'TALLY_VOTES' });
-      }
+      if (hostConnection) { hostConnection.send({ type: 'MOD_ACTION', action: 'TALLY_VOTES' }); }
     }
 
     function submitMafiaTarget(targetId) { 
-      if (hostConnection) {
-        hostConnection.send({ type: 'MAFIA_TARGET', targetId: targetId }); 
-      }
+      if (hostConnection) { hostConnection.send({ type: 'MAFIA_TARGET', targetId: targetId }); }
     }
 
     function submitVote(targetId) { 
-      if (hostConnection) {
-        hostConnection.send({ type: 'SUBMIT_VOTE', voterId: localPlayerId, targetId: targetId }); 
-      }
+      if (hostConnection) { hostConnection.send({ type: 'SUBMIT_VOTE', voterId: localPlayerId, targetId: targetId }); }
     }
 
     function getPhaseDisplayName(phase) {
@@ -858,6 +887,7 @@
       const secretMafiaEl = document.getElementById('secret-mafia-name');
       if (secretMafiaEl) secretMafiaEl.innerText = mafiaPlayer ? mafiaPlayer.name : '[Awaiting Start]';
 
+      // MODERATOR DASHBOARD ANNOUNCEMENTS
       const modAnnouncement = document.getElementById('mod-announcement');
       if (modAnnouncement) {
         if (state.phase === 'NIGHT_MAFIA') {
@@ -874,10 +904,27 @@
             modAnnouncement.style.color = 'var(--accent-red)';
           }
         } else if (state.phase === 'DAY_VOTING') {
-          modAnnouncement.innerText = `☀️ Day Phase: Discussion & Voting in progress.`;
-          modAnnouncement.style.background = 'rgba(2, 132, 199, 0.08)';
-          modAnnouncement.style.borderColor = 'var(--accent-blue)';
-          modAnnouncement.style.color = 'var(--accent-blue)';
+          const eligibleVoters = state.players.filter(p => p.isAlive && !p.isModerator);
+          const votedCount = Object.keys(state.votes).length;
+
+          if (votedCount === eligibleVoters.length && eligibleVoters.length > 0) {
+            if (state.isTie) {
+              modAnnouncement.innerText = `⚖️ ALL MEMBERS HAVE VOTED: IT IS A TIE! Tallying will require them to vote again.`;
+              modAnnouncement.style.background = 'rgba(217, 119, 6, 0.15)';
+              modAnnouncement.style.borderColor = 'var(--accent-yellow)';
+              modAnnouncement.style.color = 'var(--accent-yellow)';
+            } else {
+              modAnnouncement.innerText = `✅ ALL MEMBERS HAVE VOTED (${votedCount}/${eligibleVoters.length}). Ready to tally.`;
+              modAnnouncement.style.background = 'rgba(5, 150, 105, 0.1)';
+              modAnnouncement.style.borderColor = 'var(--accent-green)';
+              modAnnouncement.style.color = 'var(--accent-green)';
+            }
+          } else {
+            modAnnouncement.innerText = `☀️ Voting in progress (${votedCount}/${eligibleVoters.length} members voted)...`;
+            modAnnouncement.style.background = 'rgba(2, 132, 199, 0.08)';
+            modAnnouncement.style.borderColor = 'var(--accent-blue)';
+            modAnnouncement.style.color = 'var(--accent-blue)';
+          }
         } else {
           modAnnouncement.innerText = state.announcement;
           modAnnouncement.style.background = '';
@@ -887,26 +934,31 @@
       }
 
       const btnStartGame = document.getElementById('btn-start-game');
-      const btnStartDiscussion = document.getElementById('btn-start-discussion');
+      const btnEndNight = document.getElementById('btn-end-night');
       const btnTallyVotes = document.getElementById('btn-tally-votes');
+      const btnSkipVote = document.getElementById('btn-skip-vote');
 
-      if (btnStartGame && btnStartDiscussion && btnTallyVotes) {
+      if (btnStartGame && btnEndNight && btnTallyVotes && btnSkipVote) {
         if (state.phase === 'LOBBY' && state.moderatorId) {
           btnStartGame.classList.remove('hidden');
-          btnStartDiscussion.classList.add('hidden');
+          btnEndNight.classList.add('hidden');
           btnTallyVotes.classList.add('hidden');
+          btnSkipVote.classList.add('hidden');
         } else if (state.phase === 'NIGHT_MAFIA') {
           btnStartGame.classList.add('hidden');
-          btnStartDiscussion.classList.remove('hidden');
+          btnEndNight.classList.remove('hidden');
           btnTallyVotes.classList.add('hidden');
+          btnSkipVote.classList.add('hidden');
         } else if (state.phase === 'DAY_VOTING') {
           btnStartGame.classList.add('hidden');
-          btnStartDiscussion.classList.add('hidden');
+          btnEndNight.classList.add('hidden');
           btnTallyVotes.classList.remove('hidden');
+          btnSkipVote.classList.remove('hidden');
         } else {
           btnStartGame.classList.add('hidden');
-          btnStartDiscussion.classList.add('hidden');
+          btnEndNight.classList.add('hidden');
           btnTallyVotes.classList.add('hidden');
+          btnSkipVote.classList.add('hidden');
         }
       }
 
@@ -946,40 +998,63 @@
             playerActionBox.innerText = "You have been eliminated from the game.";
             playerActionBox.style.background = 'rgba(225, 29, 72, 0.1)';
             playerActionBox.style.color = 'var(--accent-red)';
+            playerActionBox.style.borderColor = 'var(--accent-red)';
           } else if (state.phase === 'LOBBY') {
             playerActionBox.innerText = "Waiting for the Moderator to start the game...";
             playerActionBox.style.background = '';
             playerActionBox.style.color = '';
+            playerActionBox.style.borderColor = '';
           } else if (state.phase === 'NIGHT_MAFIA') {
             if (localPlayer.isMafia) {
-              playerActionBox.innerText = "🌙 CHOOSE YOUR TARGET TO ELIMINATE:";
-              state.players.filter(p => p.isAlive && p.id !== localPlayer.id).forEach(p => {
-                const btn = document.createElement('button');
-                btn.className = 'btn-danger';
-                btn.innerText = `Eliminate ${p.name}`;
-                btn.onclick = () => {
-                  submitMafiaTarget(p.id);
-                  alert(`Target selected: ${p.name}`);
-                };
-                playerInteractiveOptions.appendChild(btn);
-              });
+              if (state.mafiaTarget) {
+                const target = state.players.find(p => p.id === state.mafiaTarget);
+                playerActionBox.innerText = `🌙 You selected ${target ? target.name : 'someone'}. Waiting for Moderator to wake the town...`;
+                playerActionBox.style.background = 'rgba(5, 150, 105, 0.1)';
+                playerActionBox.style.color = 'var(--accent-green)';
+                playerActionBox.style.borderColor = 'var(--accent-green)';
+              } else {
+                playerActionBox.innerText = "🌙 CHOOSE YOUR TARGET TO ELIMINATE:";
+                playerActionBox.style.background = 'rgba(225, 29, 72, 0.08)';
+                playerActionBox.style.color = 'var(--accent-red)';
+                playerActionBox.style.borderColor = 'var(--accent-red)';
+                
+                state.players.filter(p => p.isAlive && p.id !== localPlayer.id && !p.isModerator).forEach(p => {
+                  const btn = document.createElement('button');
+                  btn.className = 'btn-danger';
+                  btn.innerText = `Eliminate ${p.name}`;
+                  btn.onclick = () => { submitMafiaTarget(p.id); };
+                  playerInteractiveOptions.appendChild(btn);
+                });
+              }
             } else {
               playerActionBox.innerText = "🌙 Night has fallen. Close your eyes and wait...";
+              playerActionBox.style.background = '';
+              playerActionBox.style.color = '';
+              playerActionBox.style.borderColor = '';
             }
           } else if (state.phase === 'DAY_VOTING') {
-            playerActionBox.innerText = "☀️ Cast your vote on who you suspect is the Mafia:";
+            if (state.votes[localPlayer.id]) {
+              const votedFor = state.players.find(p => p.id === state.votes[localPlayer.id]);
+              playerActionBox.innerText = `☀️ You voted for: ${votedFor ? votedFor.name : 'Unknown'}. You can change it below.`;
+            } else {
+              playerActionBox.innerText = "☀️ Discuss! If you suspect someone, cast your vote below:";
+            }
+            playerActionBox.style.background = 'rgba(2, 132, 199, 0.08)';
+            playerActionBox.style.color = 'var(--accent-blue)';
+            playerActionBox.style.borderColor = 'var(--accent-blue)';
+
             state.players.filter(p => p.isAlive && p.id !== localPlayer.id && !p.isModerator).forEach(p => {
               const btn = document.createElement('button');
-              btn.className = 'btn-alt';
+              btn.className = state.votes[localPlayer.id] === p.id ? 'btn-danger' : 'btn-alt';
               btn.innerText = `Vote for ${p.name}`;
-              btn.onclick = () => {
-                submitVote(p.id);
-                alert(`Vote cast for: ${p.name}`);
-              };
+              btn.onclick = () => { submitVote(p.id); };
               playerInteractiveOptions.appendChild(btn);
             });
           } else {
             playerActionBox.innerText = state.announcement;
+            playerActionBox.style.background = '';
+            playerActionBox.style.color = '';
+            playerActionBox.style.borderColor = '';
           }
         }
       }
