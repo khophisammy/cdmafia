@@ -184,6 +184,31 @@
       padding-right: 0.3rem;
     }
     
+    /* Joined Players: smooth scrolling with the scrollbar fully hidden. */
+    #screen-player-list {
+      min-height: 8rem;
+      max-height: clamp(12rem, 42vh, 24rem);
+      overflow-y: auto;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      touch-action: pan-y;
+      align-content: start;
+    }
+    #screen-player-list::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+    #screen-player-list:focus {
+      outline: 2px solid rgba(2, 132, 199, 0.22);
+      outline-offset: 3px;
+      border-radius: 10px;
+    }
+
     .player-card {
       background: var(--card-item-bg); padding: 1rem 0.5rem; border-radius: 12px; text-align: center;
       border: 1px solid var(--card-item-border); font-weight: 700; color: var(--text-main);
@@ -383,7 +408,7 @@
           </div>
 
           <h3 style="text-align: left; font-size: 1.2rem;">Joined Players (<span id="player-count">0</span>)</h3>
-          <div id="screen-player-list" class="player-grid"></div>
+          <div id="screen-player-list" class="player-grid" tabindex="0" role="region" aria-label="Joined players. Scroll to view more players."></div>
         </div>
       </div>
     </div>
@@ -520,6 +545,18 @@
 
         <hr style="border: 0; border-top: 1px solid var(--card-item-border); margin: 0.5rem 0;">
 
+        <div style="background:rgba(147,51,234,.07);border:1px solid rgba(147,51,234,.25);border-radius:14px;padding:1rem;">
+          <h3 style="color:var(--accent-purple);">Temporary Admin Access</h3>
+          <p style="text-align:center;color:var(--text-muted);margin-bottom:.75rem;">Generate one temporary login for this browser.</p>
+          <select id="temp-admin-expiry"><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60" selected>1 hour</option><option value="240">4 hours</option><option value="1440">24 hours</option></select>
+          <button onclick="generateTemporaryAdmin()" class="btn-purple" style="margin-top:.5rem;">Generate Temporary Login</button>
+          <div id="temp-admin-result" class="hidden" style="margin-top:.75rem;text-align:center;">
+            <p>Username: <strong id="temp-admin-username"></strong></p><p>Password: <strong id="temp-admin-password"></strong></p>
+            <p id="temp-admin-expiry-display" style="color:var(--text-muted);"></p>
+            <div style="display:flex;gap:.5rem;margin-top:.5rem;"><button onclick="copyTemporaryAdmin()" class="btn-alt">Copy</button><button onclick="revokeTemporaryAdmin()" class="btn-danger">Revoke</button></div>
+          </div><p id="temp-admin-status" style="text-align:center;color:var(--text-muted);margin-top:.5rem;"></p>
+        </div>
+        <hr style="border:0;border-top:1px solid var(--card-item-border);margin:.5rem 0;">
         <h3>Global Emergency Actions</h3>
         <button onclick="forceEndGameFromScreen()" class="btn-danger" style="padding: 1rem;">🛑 Force End Game & Return Lobby</button>
       </div>
@@ -563,6 +600,30 @@
       votes: {}, isTie: false, announcement: 'Waiting for players to join...',
       timer: 0, timerActive: false, eliminantsChat: []
     };
+
+    const HOST_STATE_KEY = 'mafiaHostStateV2';
+    const PLAYER_SESSION_KEY = 'mafiaPlayerSessionV2';
+    const TEMP_ADMIN_KEY = 'mafiaTemporaryAdminV2';
+    let reconnectAttempts = 0;
+
+    function saveHostState() {
+      if (!isHost || !state.roomCode) return;
+      try { localStorage.setItem(HOST_STATE_KEY, JSON.stringify({ state, savedAt: Date.now() })); } catch (e) { console.warn('Could not save game state', e); }
+    }
+    function loadHostState() {
+      try { const saved=JSON.parse(localStorage.getItem(HOST_STATE_KEY)); return saved && saved.state && saved.state.roomCode ? saved.state : null; } catch(e) { return null; }
+    }
+    function clearHostState() { try { localStorage.removeItem(HOST_STATE_KEY); } catch(e) {} }
+    function savePlayerSession(data) { try { sessionStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify(data)); } catch(e) {} }
+    function loadPlayerSession() { try { return JSON.parse(sessionStorage.getItem(PLAYER_SESSION_KEY)); } catch(e) { return null; } }
+    function clearPlayerSession() { try { sessionStorage.removeItem(PLAYER_SESSION_KEY); } catch(e) {} }
+
+    function secureRandom(length, chars) { const a=new Uint32Array(length); crypto.getRandomValues(a); return Array.from(a,v=>chars[v%chars.length]).join(''); }
+    function getTemporaryAdmin() { try { const a=JSON.parse(localStorage.getItem(TEMP_ADMIN_KEY)); if(!a||Date.now()>=a.expiresAt){localStorage.removeItem(TEMP_ADMIN_KEY);return null;} return a; } catch(e){ return null; } }
+    function validateTemporaryAdmin(u,p) { const a=getTemporaryAdmin(); return !!(a&&a.username===u&&a.password===p); }
+    function generateTemporaryAdmin() { const m=Number(document.getElementById('temp-admin-expiry').value)||60; const a={username:'Admin-'+secureRandom(6,'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'),password:secureRandom(14,'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%'),expiresAt:Date.now()+m*60000}; localStorage.setItem(TEMP_ADMIN_KEY,JSON.stringify(a)); document.getElementById('temp-admin-username').textContent=a.username; document.getElementById('temp-admin-password').textContent=a.password; document.getElementById('temp-admin-expiry-display').textContent='Valid until '+new Date(a.expiresAt).toLocaleString(); document.getElementById('temp-admin-result').classList.remove('hidden'); document.getElementById('temp-admin-status').textContent='Temporary access is active.'; }
+    async function copyTemporaryAdmin(){const a=getTemporaryAdmin();if(!a)return revokeTemporaryAdmin();const s=`Username: ${a.username}\nPassword: ${a.password}\nExpires: ${new Date(a.expiresAt).toLocaleString()}`;try{await navigator.clipboard.writeText(s);document.getElementById('temp-admin-status').textContent='Login copied.';}catch(e){prompt('Copy login:',s);}}
+    function revokeTemporaryAdmin(){localStorage.removeItem(TEMP_ADMIN_KEY);document.getElementById('temp-admin-result').classList.add('hidden');document.getElementById('temp-admin-status').textContent='Temporary access revoked or expired.';}
 
     function updateStatus(msg, isSuccess = false) {
       const el = document.getElementById('connection-status');
@@ -650,7 +711,9 @@
       const room = document.getElementById('admin-room-input').value.trim().toUpperCase();
       const err = document.getElementById('admin-error-msg');
 
-      if (user === 'Sammy' && pass === '12345678') {
+      const permanentLogin = user === 'Sammy' && pass === '12345678';
+      const temporaryLogin = validateTemporaryAdmin(user, pass);
+      if (permanentLogin || temporaryLogin) {
         err.style.display = 'none';
         
         if (room && !isHost) {
@@ -900,6 +963,8 @@
 
     /* FIX: ADDED DELAY TO ENSURE MESSAGES FINISH SENDING BEFORE TEARDOWN */
     function regenerateHostCode() {
+      const warning = 'Regenerating the room code will disconnect all players and reset the lobby. All joined players, moderator assignment, roles, votes, and the current game will be cleared. Continue?';
+      if (!confirm(warning)) return;
       updateStatus('🔄 Notifying players and regenerating room code...');
 
       if (playerConnections.length > 0) {
@@ -915,16 +980,28 @@
 
       // 1000ms delay guarantees the network queue has time to flush out the disconnect messages
       setTimeout(() => {
-        initHostScreen();
+        clearHostState();
+        state = { roomCode:'', phase:'LOBBY', players:[], moderatorId:null, mafiaId:null, mafiaTarget:null, votes:{}, isTie:false, announcement:'Waiting for players to join...', timer:0, timerActive:false, eliminantsChat:[] };
+        initHostScreen(true);
       }, 1000);
     }
 
-    function initHostScreen() {
+    function initHostScreen(forceNew = false) {
       playerConnections = [];
-      roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
-      state.roomCode = roomCode;
-      state.players = [];
-      state.announcement = 'Waiting for players to connect...';
+      const recovered = forceNew ? null : loadHostState();
+      if (recovered) {
+        state = recovered;
+        roomCode = state.roomCode;
+        state.players.forEach(p => p.isConnected = false);
+        state.announcement = 'Recovered saved game. Waiting for players to reconnect...';
+        updateStatus('♻️ Saved game recovered. Reopening room ' + roomCode + '...');
+      } else {
+        roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+        state.roomCode = roomCode;
+        state.players = [];
+        state.announcement = 'Waiting for players to connect...';
+      }
+      saveHostState();
 
       const codeDisplay = document.getElementById('screen-room-code');
       if (codeDisplay) codeDisplay.innerText = roomCode;
@@ -954,7 +1031,11 @@
         playerConnections.push(conn);
         conn.on('open', () => { conn.send({ type: 'STATE_UPDATE', state: state }); });
         conn.on('data', (data) => { handleHostIncomingMessage(conn, data); });
-        conn.on('close', () => { playerConnections = playerConnections.filter(c => c !== conn); });
+        conn.on('close', () => {
+          playerConnections = playerConnections.filter(c => c !== conn);
+          const player = state.players.find(p => p.connectionPeerId === conn.peer);
+          if (player) { player.isConnected = false; saveHostState(); render(); }
+        });
       });
 
       peer.on('error', (err) => {
@@ -972,10 +1053,19 @@
         state.announcement = `📢 ADMIN: ${msg.text}`;
         broadcastStateToAll();
       }
-      else if (msg.type === 'JOIN_REQUEST') {
-        const existingPlayer = state.players.find(p => p.name.toLowerCase() === msg.player.name.toLowerCase());
-        if (existingPlayer) existingPlayer.id = msg.player.id;
-        else state.players.push(msg.player);
+      else if (msg.type === 'JOIN_REQUEST' || msg.type === 'RECONNECT_REQUEST') {
+        let existingPlayer = state.players.find(p => p.id === msg.player.id);
+        if (!existingPlayer) existingPlayer = state.players.find(p => p.name.toLowerCase() === msg.player.name.toLowerCase());
+        if (existingPlayer) {
+          existingPlayer.id = msg.player.id;
+          existingPlayer.connectionPeerId = conn.peer;
+          existingPlayer.isConnected = true;
+        } else {
+          msg.player.connectionPeerId = conn.peer;
+          msg.player.isConnected = true;
+          state.players.push(msg.player);
+        }
+        conn.send({ type:'RECONNECT_ACCEPTED', playerId:msg.player.id });
         broadcastStateToAll();
       } 
       else if (msg.type === 'MAFIA_TARGET') {
@@ -1166,6 +1256,7 @@
     }
 
     function broadcastStateToAll() {
+      saveHostState();
       playerConnections.forEach(conn => {
         if (conn.open) conn.send({ type: 'STATE_UPDATE', state: state });
       });
@@ -1182,8 +1273,11 @@
       joinBtn.disabled = true;
       updateStatus(`Connecting to room ${inputCode}...`);
 
-      localPlayerId = 'p_' + Math.random().toString(36).substr(2, 9);
-      const newPlayer = { id: localPlayerId, name: name, isAlive: true, isMafia: false, isModerator: false };
+      const savedSession = loadPlayerSession();
+      localPlayerId = savedSession && savedSession.name === name && savedSession.roomCode === inputCode ? savedSession.playerId : 'p_' + Math.random().toString(36).substr(2, 9);
+      const isReconnect = Boolean(savedSession && savedSession.playerId === localPlayerId && savedSession.roomCode === inputCode);
+      const newPlayer = { id: localPlayerId, name: name, isAlive: true, isMafia: false, isModerator: false, isConnected:true };
+      savePlayerSession({ playerId:localPlayerId, name, roomCode:inputCode });
 
       if (peer) { try { peer.destroy(); } catch(e) {} }
 
@@ -1205,8 +1299,9 @@
         hostConnection.on('open', () => {
           clearTimeout(connectTimeout);
           isKickedOut = false;
+          reconnectAttempts = 0;
           updateStatus(`🟢 Connected to Room ${inputCode}!`, true);
-          hostConnection.send({ type: 'JOIN_REQUEST', player: newPlayer });
+          hostConnection.send({ type: isReconnect ? 'RECONNECT_REQUEST' : 'JOIN_REQUEST', player: newPlayer });
           document.getElementById('player-login-form').classList.add('hidden');
           document.getElementById('player-active-panel').classList.remove('hidden');
           document.getElementById('player-display-name').innerText = name;
@@ -1227,8 +1322,19 @@
         hostConnection.on('close', () => {
           updateStatus('🔴 Disconnected from host server.');
           if (!isKickedOut && localPlayerId) {
-            alert("⚠️ Connection to the host was lost. The room may have been closed or regenerated.");
-            goHome();
+            reconnectAttempts++;
+            if (reconnectAttempts <= 3) {
+              updateStatus(`⚠️ Connection lost. Reconnecting (${reconnectAttempts}/3)...`);
+              setTimeout(() => {
+                document.getElementById('player-name-input').value = name;
+                document.getElementById('player-room-input').value = inputCode;
+                document.getElementById('btn-join').disabled = false;
+                joinGame();
+              }, reconnectAttempts * 1500);
+            } else {
+              alert('Connection could not be restored after 3 attempts. Your identity is saved; enter the same name and room code to reconnect later.');
+              document.getElementById('btn-join').disabled = false;
+            }
           }
         });
 
@@ -1299,6 +1405,28 @@
     function submitVote(targetId) { 
       if (hostConnection) { hostConnection.send({ type: 'SUBMIT_VOTE', voterId: localPlayerId, targetId: targetId }); }
     }
+
+    function enableSmoothPlayerListScrolling() {
+      const list = document.getElementById('screen-player-list');
+      if (!list || list.dataset.smoothScrollReady) return;
+      list.dataset.smoothScrollReady = 'true';
+      list.addEventListener('keydown', event => {
+        const step = Math.max(80, list.clientHeight * 0.72);
+        let top = null;
+        if (event.key === 'ArrowDown') top = list.scrollTop + 70;
+        else if (event.key === 'ArrowUp') top = list.scrollTop - 70;
+        else if (event.key === 'PageDown') top = list.scrollTop + step;
+        else if (event.key === 'PageUp') top = list.scrollTop - step;
+        else if (event.key === 'Home') top = 0;
+        else if (event.key === 'End') top = list.scrollHeight;
+        if (top !== null) {
+          event.preventDefault();
+          list.scrollTo({ top, behavior: 'smooth' });
+        }
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', enableSmoothPlayerListScrolling);
 
     function formatTime(seconds) {
       const mins = Math.floor(seconds / 60);
