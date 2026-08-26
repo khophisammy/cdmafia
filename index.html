@@ -573,7 +573,7 @@
         </div>
         <div class="demo-panel">
           <h3 style="color:var(--accent-yellow)">Demo Testing Mode</h3>
-          <p style="text-align:center;color:var(--text-muted);margin-bottom:.75rem">Demo players automatically vote, including every runoff round.</p>
+          <p style="text-align:center;color:var(--text-muted);margin-bottom:.75rem">Demo players automatically vote, including runoff rounds.</p>
           <select id="demo-player-count"><option value="4">4 demo players</option><option value="5" selected>5 demo players</option><option value="7">7 demo players</option><option value="9">9 demo players</option></select>
           <button onclick="startDemoMode()" style="margin-top:.5rem;background:var(--accent-yellow)">🎮 Generate Demo Players</button>
           <button onclick="removeDemoPlayers()" class="btn-alt" style="margin-top:.5rem">Remove Demo Players</button>
@@ -665,6 +665,7 @@
       demoVoteTimers.forEach(timer=>clearTimeout(timer));
       demoVoteTimers.clear();
     }
+
     function scheduleDemoVotes(){
       if(!isHost || !state.demoMode || state.phase!=='DAY_VOTING') return;
       const round=state.votingRound||1;
@@ -680,12 +681,72 @@
           if(!targets.length) return;
           const target=targets[Math.floor(Math.random()*targets.length)];
           handleVote(bot.id,target.id);
-        },8000+(index*1200));
+        },2500+(index*800));
         demoVoteTimers.set(key,timer);
       });
     }
-    function scheduleDemoMafia(){if(!state.demoMode||state.phase!=='NIGHT_MAFIA'||state.mafiaTarget)return;const m=state.players.find(p=>p.id===state.mafiaId);if(!m||!m.isDemo)return;setTimeout(()=>{if(state.phase!=='NIGHT_MAFIA'||state.mafiaTarget)return;const t=state.players.filter(p=>p.isAlive&&!p.isModerator&&!p.isMafia);if(t.length){state.mafiaTarget=t[Math.floor(Math.random()*t.length)].id;state.announcement='The Mafia has selected a target!';broadcastStateToAll();}},6000);}
-    function handleVote(voterId,targetId){const voter=eligibleVoters().find(p=>p.id===voterId);if(!voter||!voteTargets(voterId).some(p=>p.id===targetId))return;state.votes[voterId]=targetId;const voters=eligibleVoters();if(Object.keys(state.votes).length<voters.length){broadcastStateToAll();return;}const counts={};Object.values(state.votes).forEach(id=>counts[id]=(counts[id]||0)+1);const high=Math.max(...Object.values(counts));const leaders=Object.keys(counts).filter(id=>counts[id]===high);if(leaders.length>1){state.tieCandidates=leaders;state.pendingEliminationId=null;state.votes={};state.isTie=true;state.votingRound=(state.votingRound||1)+1;clearDemoVoteTimers();demoVoteGeneration++;const names=tieNames();state.announcement=`⚖️ TIE BETWEEN: ${names.join(' and ')}. Vote again between only these players.`;showBigPopup('TIE VOTE ⚖️',`Tie between: ${names.join(' and ')}. Everyone must vote again.`, 'var(--accent-yellow)',0);broadcastStateToAll();}else{state.tieCandidates=[];state.pendingEliminationId=leaders[0];state.isTie=false;const win=state.players.find(p=>p.id===leaders[0]);state.announcement=`Voting complete. ${win?win.name:'One player'} has the highest vote. Click Next to tally.`;broadcastStateToAll();}}
+
+    function scheduleDemoMafia(){
+      if(!state.demoMode||state.phase!=='NIGHT_MAFIA'||state.mafiaTarget)return;
+      const m=state.players.find(p=>p.id===state.mafiaId);
+      if(!m||!m.isDemo)return;
+      setTimeout(()=>{
+        if(state.phase!=='NIGHT_MAFIA'||state.mafiaTarget)return;
+        const t=state.players.filter(p=>p.isAlive&&!p.isModerator&&!p.isMafia);
+        if(t.length){
+          const targetId = t[Math.floor(Math.random()*t.length)].id;
+          state.mafiaTarget = targetId;
+          const targetPlayer = state.players.find(p => p.id === targetId);
+          state.announcement = "Mafia has selected - please raise your head.";
+          showBigPopup("MAFIA HAS SELECTED", "Mafia has selected - please raise your head.", "var(--accent-green)", 0);
+          broadcastStateToAll();
+        }
+      },3500);
+    }
+
+    function handleVote(voterId,targetId){
+      const voter=eligibleVoters().find(p=>p.id===voterId);
+      if(!voter||!voteTargets(voterId).some(p=>p.id===targetId))return;
+      state.votes[voterId]=targetId;
+      const voters=eligibleVoters();
+      if(Object.keys(state.votes).length<voters.length){
+        broadcastStateToAll();
+        return;
+      }
+      
+      const counts={};
+      Object.values(state.votes).forEach(id=>counts[id]=(counts[id]||0)+1);
+      const high=Math.max(...Object.values(counts));
+      const leaders=Object.keys(counts).filter(id=>counts[id]===high);
+      
+      if(leaders.length>1){
+        state.tieCandidates=leaders;
+        state.pendingEliminationId=null;
+        state.votes={};
+        state.isTie=true;
+        state.votingRound=(state.votingRound||1)+1;
+        clearDemoVoteTimers();
+        demoVoteGeneration++;
+        const names=tieNames();
+        state.announcement=`⚖️ TIE BETWEEN: ${names.join(' and ')}. Vote again between only these players.`;
+        showBigPopup("VOTING COMPLETED", `It's a tie between: ${names.join(' and ')}. Players must vote again between the tied candidates!`, "var(--accent-yellow)", 0);
+        broadcastStateToAll();
+      } else {
+        const eliminated = state.players.find(p => p.id === leaders[0]);
+        if (eliminated) {
+          eliminated.isAlive = false;
+        }
+        state.tieCandidates = [];
+        state.pendingEliminationId = null;
+        state.isTie = false;
+        state.phase = 'VOTE_REVEAL';
+        state.announcement = `Voting completed. ${eliminated ? eliminated.name : 'Player'} received the highest vote and is eliminated!`;
+        showBigPopup("VOTING COMPLETED", `${eliminated ? eliminated.name : 'Player'} has the highest vote and is eliminated!`, "var(--accent-red)", 0);
+        checkWinConditions();
+        broadcastStateToAll();
+      }
+    }
+
     function updateStatus(msg, isSuccess = false) {
       const el = document.getElementById('connection-status');
       if (!el) return;
@@ -962,7 +1023,7 @@
           } else {
             clearInterval(timerInterval);
             state.timerActive = false;
-            state.announcement = "⏰ Discussion time is up! Time to cast your votes!";
+            state.announcement = "⏰ Discussion time is up! Cast your votes now!";
             broadcastStateToAll();
           }
         }, 1000);
@@ -1110,7 +1171,8 @@
       else if (msg.type === 'MAFIA_TARGET') {
         state.mafiaTarget = msg.targetId;
         const targetPlayer = state.players.find(p => p.id === msg.targetId);
-        state.announcement = targetPlayer ? `The MAFIA has selected a target!` : "The MAFIA has made a secret choice...";
+        state.announcement = "Mafia has selected - please raise your head.";
+        showBigPopup("MAFIA HAS SELECTED", "Mafia has selected - please raise your head.", "var(--accent-green)", 0);
         broadcastStateToAll();
       } 
       else if (msg.type === 'SUBMIT_VOTE') { handleVote(msg.voterId,msg.targetId); }
@@ -1127,23 +1189,6 @@
         else if(msg.action==='DEMO_REMOVE'){state.players=state.players.filter(p=>!p.isDemo);state.demoMode=false;state.phase='LOBBY';state.moderatorId=null;state.mafiaId=null;state.votes={};state.tieCandidates=[];state.announcement='Demo players removed.';broadcastStateToAll();}
         else if(msg.action==='RESTART_GAME'){resetRound('Game restarted by Moderator.');}
         else if(msg.action==='END_GAME'){resetRound('Game ended.');}
-        else if (msg.action === 'FORCE_END_GAME') {
-          stopDiscussionTimer();
-          state.phase = 'LOBBY';
-          state.moderatorId = null;
-          state.mafiaId = null;
-          state.mafiaTarget = null;
-          state.votes = {};
-          state.isTie = false;
-          state.eliminantsChat = [];
-          state.announcement = "The game was manually ended by Admin. Assign a moderator to begin.";
-          state.players.forEach(p => {
-            p.isAlive = true;
-            p.isMafia = false;
-            p.isModerator = false;
-          });
-          broadcastStateToAll();
-        }
         else if (msg.action === 'START_TIMER') {
           startDiscussionTimer(msg.seconds || 60);
         }
@@ -1172,72 +1217,40 @@
           state.mafiaTarget = null;
           state.votes = {};
           state.isTie = false;
-          state.announcement = "The game has started! Introduce yourselves and discuss.";
-          showBigPopup("DISCUSSION & VOTING TIME 🗣️", "WHO DO YOU THINK IS THE MAFIA? Cast your votes on your devices.", "var(--accent-blue)", 0);
+          state.announcement = "Discussion and voting mode is active. Discuss and cast your votes!";
+          showBigPopup("DISCUSSION AND VOTING", "Discuss and cast your votes on your devices.", "var(--accent-blue)", 0);
           startDiscussionTimer(60);
           broadcastStateToAll();
           scheduleDemoVotes();
         } 
-        else if (msg.action === 'START_MAFIA_TURN') {
+        else if (msg.action === 'START_NIGHT_MODE') {
           stopDiscussionTimer();
           state.phase = 'NIGHT_MAFIA';
           state.mafiaTarget = null;
           state.votes = {};
           state.isTie = false;
-          state.announcement = "NIGHT PHASE: The Mafia is choosing a target...";
-          showBigPopup("NIGHT TIME 🌙", "The Mafia is making a secret move. Close your eyes!", "var(--accent-purple)", 0);
+          state.announcement = "NIGHT MODE: Mafia is selecting...";
+          showBigPopup("NIGHT MODE", "Mafia is selecting...", "var(--accent-purple)", 0);
           broadcastStateToAll();
         } 
-        else if (msg.action === 'START_DISCUSSION') {
+        else if (msg.action === 'REVEAL_NIGHT_ELIMINATION') {
           stopDiscussionTimer();
-          state.phase = 'DAY_VOTING'; // Enter Discussion and Voting stage mode
-          state.votes = {};
-          state.isTie = false;
-          state.tieCandidates = [];
-
+          state.phase = 'NIGHT_REVEAL';
+          let eliminatedPlayer = null;
           if (state.mafiaTarget) {
-            const target = state.players.find(p => p.id === state.mafiaTarget);
-            state.mafiaTarget = null;
-            if (target) {
-              target.isAlive = false;
-              if (!checkWinConditions()) {
-                state.announcement = `${target.name} was eliminated! Discuss and cast your votes.`;
-                // POPUP TRIGGERED NOW THAT WE ARE IN DISCUSSION AND VOTING STAGE MODE
-                showBigPopup("PLAYER ELIMINATED ☠️", `${target.name} was eliminated during the night.`, "var(--accent-red)", 0);
-                startDiscussionTimer(60);
-              }
+            eliminatedPlayer = state.players.find(p => p.id === state.mafiaTarget);
+            if (eliminatedPlayer) {
+              eliminatedPlayer.isAlive = false;
             }
+          }
+          if (eliminatedPlayer) {
+            state.announcement = `Night Outcome: ${eliminatedPlayer.name} was eliminated by the Mafia!`;
+            showBigPopup("NIGHT ELIMINATION", `${eliminatedPlayer.name} was eliminated by the Mafia!`, "var(--accent-red)", 0);
           } else {
-            if (!checkWinConditions()) {
-              state.announcement = `The town woke up. No one was eliminated! Discuss and cast your votes.`;
-              showBigPopup("DAY BREAK ☀️", `It's a peaceful morning. No one was eliminated.`, "var(--accent-blue)", 0);
-              startDiscussionTimer(60);
-            }
+            state.announcement = "Night Outcome: The Mafia did not select anyone. No one was eliminated!";
+            showBigPopup("NIGHT ELIMINATION", "No one was eliminated during the night!", "var(--accent-blue)", 0);
           }
-          broadcastStateToAll();
-        } 
-        else if(msg.action==='TALLY_VOTES'){
-          const voters = eligibleVoters();
-          if (state.isTie || state.tieCandidates.length > 1) return alert('Runoff voting is still active.');
-          if (Object.keys(state.votes).length < voters.length || !state.pendingEliminationId) return alert(`Waiting for final votes (${Object.keys(state.votes).length}/${voters.length}).`);
-          
-          const eliminated = state.players.find(p => p.id === state.pendingEliminationId);
-          if (!eliminated) return;
-          
-          eliminated.isAlive = false;
-          state.announcement = `${eliminated.name} was eliminated by vote!`;
-          
-          state.pendingEliminationId = null;
-          state.tieCandidates = [];
-          state.votingRound = 1;
-          
-          if (!checkWinConditions()) {
-            state.phase = 'VOTE_REVEAL'; 
-            state.votes = {};
-            state.isTie = false;
-            // POPUP SHOWS ELIMINATION DETAILS FOR THE VOTED PLAYER
-            showBigPopup('VOTED OUT 🗳️', `${eliminated.name} has been banished from the town!`, 'var(--accent-yellow)', 0);
-          }
+          checkWinConditions();
           broadcastStateToAll();
         }
       }
@@ -1365,22 +1378,20 @@
         p.isMafia = (p.id === state.mafiaId);
       });
 
-      state.announcement = "Moderator assigned. Waiting for them to start the discussion...";
+      state.announcement = "Moderator assigned. Waiting for them to start Discussion and Voting mode...";
       broadcastStateToAll();
     }
 
-    // UNIFIED ADVANCE NEXT STAGE CONTROLLER
+    // UNIFIED ADVANCE NEXT STAGE CONTROLLER ACCORDING TO USER FLOW
     function advanceNextStage() {
       if (!hostConnection && !isHost) return alert("Connection lost.");
       
-      if (state.phase === 'LOBBY') {
+      if (state.phase === 'LOBBY' || state.phase === 'NIGHT_REVEAL') {
         startFirstDiscussion();
-      } else if (state.phase === 'DAY_VOTING') {
-        tallyVotes();
       } else if (state.phase === 'VOTE_REVEAL') {
-        startMafiaTurn();
+        startNightMode();
       } else if (state.phase === 'NIGHT_MAFIA') {
-        startDiscussionPhase();
+        revealNightElimination();
       } else if (state.phase === 'GAME_OVER') {
         triggerRematch();
       }
@@ -1391,19 +1402,12 @@
       else { alert("Error: Connection to host lost."); }
     }
 
-    function startMafiaTurn() { 
-      if (hostConnection) { hostConnection.send({ type: 'MOD_ACTION', action: 'START_MAFIA_TURN' }); } 
+    function startNightMode() { 
+      if (hostConnection) { hostConnection.send({ type: 'MOD_ACTION', action: 'START_NIGHT_MODE' }); } 
     }
 
-    function startDiscussionPhase() {
-      if (!state.mafiaTarget) {
-        if (!confirm("The Mafia hasn't chosen a target yet! Wake town anyway? (No one dies)")) return;
-      }
-      if (hostConnection) { hostConnection.send({ type: 'MOD_ACTION', action: 'START_DISCUSSION' }); }
-    }
-
-    function tallyVotes() {
-      if (hostConnection) { hostConnection.send({ type: 'MOD_ACTION', action: 'TALLY_VOTES' }); }
+    function revealNightElimination() {
+      if (hostConnection) { hostConnection.send({ type: 'MOD_ACTION', action: 'REVEAL_NIGHT_ELIMINATION' }); }
     }
 
     function submitMafiaTarget(targetId) { 
@@ -1445,9 +1449,10 @@
     function getPhaseDisplayName(phase) {
       switch(phase) {
         case 'LOBBY': return 'Lobby Phase';
-        case 'NIGHT_MAFIA': return 'Night Phase (Mafia Action)';
-        case 'DAY_VOTING': return 'Day Phase (Discussion & Voting)';
-        case 'VOTE_REVEAL': return 'Day Phase (Vote Result)';
+        case 'DAY_VOTING': return 'Discussion & Voting Mode';
+        case 'VOTE_REVEAL': return 'Voting Outcome Phase';
+        case 'NIGHT_MAFIA': return 'Night Mode (Mafia Selecting)';
+        case 'NIGHT_REVEAL': return 'Night Outcome Phase';
         case 'GAME_OVER': return 'Match Finished';
         default: return phase;
       }
@@ -1514,12 +1519,12 @@
             if (state.phase === 'NIGHT_MAFIA') {
               screenActionStatus.classList.remove('hidden');
               if (state.mafiaTarget) {
-                screenActionStatus.innerText = "✅ The Mafia has made their selection!";
+                screenActionStatus.innerText = "✅ Mafia has selected - please raise your head.";
                 screenActionStatus.style.background = 'rgba(5, 150, 105, 0.1)';
                 screenActionStatus.style.borderColor = 'var(--accent-green)';
                 screenActionStatus.style.color = 'var(--accent-green)';
               } else {
-                screenActionStatus.innerText = "Night Phase: Waiting for the Mafia to choose...";
+                screenActionStatus.innerText = "Night Mode: Mafia is selecting...";
                 screenActionStatus.style.background = 'rgba(225, 29, 72, 0.08)';
                 screenActionStatus.style.borderColor = 'var(--accent-red)';
                 screenActionStatus.style.color = 'var(--accent-red)';
@@ -1568,13 +1573,12 @@
       if (modAnnouncement) {
         if (state.phase === 'NIGHT_MAFIA') {
           if (state.mafiaTarget) {
-            const selectedTarget = state.players.find(p => p.id === state.mafiaTarget);
-            modAnnouncement.innerText = `✅ The Mafia has selected ${selectedTarget ? selectedTarget.name : 'a target'}!`;
+            modAnnouncement.innerText = `✅ Mafia has selected - please raise your head.`;
             modAnnouncement.style.background = 'rgba(5, 150, 105, 0.1)';
             modAnnouncement.style.borderColor = 'var(--accent-green)';
             modAnnouncement.style.color = 'var(--accent-green)';
           } else {
-            modAnnouncement.innerText = `Night Phase: ${mafiaPlayer ? mafiaPlayer.name : 'The Mafia'} is making their secret choice.`;
+            modAnnouncement.innerText = `Night Mode: Mafia is selecting...`;
             modAnnouncement.style.background = 'rgba(225, 29, 72, 0.08)';
             modAnnouncement.style.borderColor = 'var(--accent-red)';
             modAnnouncement.style.color = 'var(--accent-red)';
@@ -1584,19 +1588,12 @@
           const votedCount = Object.keys(state.votes).length;
 
           if (votedCount === eligibleVoters.length && eligibleVoters.length > 0) {
-            if (state.isTie) {
-              modAnnouncement.innerText = `⚖️ ALL MEMBERS HAVE VOTED: IT IS A TIE! Tallying will require them to vote again.`;
-              modAnnouncement.style.background = 'rgba(217, 119, 6, 0.15)';
-              modAnnouncement.style.borderColor = 'var(--accent-yellow)';
-              modAnnouncement.style.color = 'var(--accent-yellow)';
-            } else {
-              modAnnouncement.innerText = `✅ ALL MEMBERS HAVE VOTED (${votedCount}/${eligibleVoters.length}). Ready to tally.`;
-              modAnnouncement.style.background = 'rgba(5, 150, 105, 0.1)';
-              modAnnouncement.style.borderColor = 'var(--accent-green)';
-              modAnnouncement.style.color = 'var(--accent-green)';
-            }
+            modAnnouncement.innerText = `✅ ALL MEMBERS HAVE VOTED (${votedCount}/${eligibleVoters.length}). Voting complete!`;
+            modAnnouncement.style.background = 'rgba(5, 150, 105, 0.1)';
+            modAnnouncement.style.borderColor = 'var(--accent-green)';
+            modAnnouncement.style.color = 'var(--accent-green)';
           } else {
-            modAnnouncement.innerText = `Voting in progress (${votedCount}/${eligibleVoters.length} members voted)...`;
+            modAnnouncement.innerText = `Discussion & Voting in progress (${votedCount}/${eligibleVoters.length} members voted)...`;
             modAnnouncement.style.background = 'rgba(2, 132, 199, 0.08)';
             modAnnouncement.style.borderColor = 'var(--accent-blue)';
             modAnnouncement.style.color = 'var(--accent-blue)';
@@ -1615,24 +1612,34 @@
 
       if (btnNextStage) {
         if (state.phase === 'LOBBY') {
-          btnNextStage.innerText = "▶️ Next Stage: Start Discussion";
+          btnNextStage.innerText = "▶️ Next Stage: Start Discussion & Voting";
           btnNextStage.className = "btn-success";
+          btnNextStage.disabled = false;
           if (modTimerControls) modTimerControls.classList.add('hidden');
         } else if (state.phase === 'DAY_VOTING') {
-          btnNextStage.innerText = "🗳️ Next Stage: Tally Votes & Reveal";
-          btnNextStage.className = "btn-danger";
+          btnNextStage.innerText = "⏳ Waiting for Voting to Complete...";
+          btnNextStage.className = "btn-alt";
+          btnNextStage.disabled = true;
           if (modTimerControls) modTimerControls.classList.remove('hidden');
         } else if (state.phase === 'VOTE_REVEAL') {
-          btnNextStage.innerText = "🌙 Next Stage: Start Night Phase";
+          btnNextStage.innerText = "🌙 Next Stage: Enter Night Mode";
           btnNextStage.className = "btn-purple";
+          btnNextStage.disabled = false;
           if (modTimerControls) modTimerControls.classList.add('hidden');
         } else if (state.phase === 'NIGHT_MAFIA') {
-          btnNextStage.innerText = "☀️ Next Stage: Wake Up Town & Enter Discussion";
+          btnNextStage.innerText = "☀️ Next Stage: Reveal Night Outcome";
           btnNextStage.className = "btn-success";
+          btnNextStage.disabled = false;
+          if (modTimerControls) modTimerControls.classList.add('hidden');
+        } else if (state.phase === 'NIGHT_REVEAL') {
+          btnNextStage.innerText = "🗣️ Next Stage: Discussion & Voting Mode";
+          btnNextStage.className = "btn-success";
+          btnNextStage.disabled = false;
           if (modTimerControls) modTimerControls.classList.add('hidden');
         } else if (state.phase === 'GAME_OVER') {
           btnNextStage.innerText = "🔄 Next Stage: Play Again (Rematch)";
           btnNextStage.className = "btn-purple";
+          btnNextStage.disabled = false;
           if (modTimerControls) modTimerControls.classList.add('hidden');
         }
       }
@@ -1725,7 +1732,7 @@
               if (localPlayer.isMafia) {
                 const selected=state.players.find(p=>p.id===state.mafiaTarget);playerActionBox.innerText=selected?`Selected: ${selected.name}. You may change your choice.`:'CHOOSE YOUR TARGET:';state.players.filter(p=>p.isAlive&&p.id!==localPlayer.id&&!p.isModerator).forEach(p=>{const b=document.createElement('button');b.className=state.mafiaTarget===p.id?'btn-success':'btn-danger';b.innerText=state.mafiaTarget===p.id?`✅ Selected: ${p.name}`:`Change to ${p.name}`;b.onclick=()=>submitMafiaTarget(p.id);playerInteractiveOptions.appendChild(b);});
               } else {
-                playerActionBox.innerText = "Night has fallen. Please close your eyes and wait...";
+                playerActionBox.innerText = "Night Mode active. Please close your eyes...";
                 playerActionBox.style.background = '';
                 playerActionBox.style.color = '';
                 playerActionBox.style.borderColor = '';
@@ -1735,13 +1742,13 @@
                 const votedFor = state.players.find(p => p.id === state.votes[localPlayer.id]);
                 playerActionBox.innerText = `You voted for: ${votedFor ? votedFor.name : 'Unknown'}. You can change it below.`;
               } else {
-                playerActionBox.innerText = "Discuss! If you suspect someone, cast your vote below:";
+                playerActionBox.innerText = "Discussion and voting active! Cast your vote below:";
               }
               playerActionBox.style.background = 'rgba(2, 132, 199, 0.08)';
               playerActionBox.style.color = 'var(--accent-blue)';
               playerActionBox.style.borderColor = 'var(--accent-blue)';
 
-              if((state.tieCandidates||[]).length>1)playerActionBox.innerText=`TIE VOTE: Choose only between ${tieNames().join(' and ')}.`;
+              if((state.tieCandidates||[]).length>1)playerActionBox.innerText=`TIE VOTE: Vote between ${tieNames().join(' and ')}.`;
               voteTargets(localPlayer.id).forEach(p=>{const btn=document.createElement('button');btn.className=state.votes[localPlayer.id]===p.id?'btn-danger':'btn-alt';btn.innerText=`Vote for ${p.name}`;btn.onclick=()=>submitVote(p.id);playerInteractiveOptions.appendChild(btn);});
             } else {
               playerActionBox.innerText = state.announcement;
