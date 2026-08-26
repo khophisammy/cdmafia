@@ -658,11 +658,11 @@
           if(!targets.length) return;
           const target=targets[Math.floor(Math.random()*targets.length)];
           handleVote(bot.id,target.id);
-        },1200+(index*700));
+        },8000+(index*1200));
         demoVoteTimers.set(key,timer);
       });
     }
-    function scheduleDemoMafia(){if(!state.demoMode||state.phase!=='NIGHT_MAFIA'||state.mafiaTarget)return;const m=state.players.find(p=>p.id===state.mafiaId);if(!m||!m.isDemo)return;setTimeout(()=>{if(state.phase!=='NIGHT_MAFIA'||state.mafiaTarget)return;const t=state.players.filter(p=>p.isAlive&&!p.isModerator&&!p.isMafia);if(t.length){state.mafiaTarget=t[Math.floor(Math.random()*t.length)].id;state.announcement='The Mafia has selected a target!';showBigPopup('MAFIA MOVE COMPLETE','The Mafia has selected a target. This message stays until the Moderator reveals the next stage.','var(--accent-red)',0);broadcastStateToAll();}},1200);}
+    function scheduleDemoMafia(){if(!state.demoMode||state.phase!=='NIGHT_MAFIA'||state.mafiaTarget)return;const m=state.players.find(p=>p.id===state.mafiaId);if(!m||!m.isDemo)return;setTimeout(()=>{if(state.phase!=='NIGHT_MAFIA'||state.mafiaTarget)return;const t=state.players.filter(p=>p.isAlive&&!p.isModerator&&!p.isMafia);if(t.length){state.mafiaTarget=t[Math.floor(Math.random()*t.length)].id;state.announcement='The Mafia has selected a target!';showBigPopup('MAFIA MOVE COMPLETE','The Mafia has selected a target. This message stays until the Moderator reveals the next stage.','var(--accent-red)',0);broadcastStateToAll();}},6000);}
     function handleVote(voterId,targetId){const voter=eligibleVoters().find(p=>p.id===voterId);if(!voter||!voteTargets(voterId).some(p=>p.id===targetId))return;state.votes[voterId]=targetId;const voters=eligibleVoters();if(Object.keys(state.votes).length<voters.length){broadcastStateToAll();return;}const counts={};Object.values(state.votes).forEach(id=>counts[id]=(counts[id]||0)+1);const high=Math.max(...Object.values(counts));const leaders=Object.keys(counts).filter(id=>counts[id]===high);if(leaders.length>1){state.tieCandidates=leaders;state.pendingEliminationId=null;state.votes={};state.isTie=true;state.votingRound=(state.votingRound||1)+1;clearDemoVoteTimers();demoVoteGeneration++;const names=tieNames();state.announcement=`⚖️ TIE BETWEEN: ${names.join(' and ')}. Vote again between only these players.`;showBigPopup('TIE VOTE ⚖️',`Tie between: ${names.join(' and ')}. Everyone must vote again.`, 'var(--accent-yellow)',0);broadcastStateToAll();}else{state.tieCandidates=[];state.pendingEliminationId=leaders[0];state.isTie=false;const win=state.players.find(p=>p.id===leaders[0]);state.announcement=`Voting complete. ${win?win.name:'One player'} has the highest vote.`;showBigPopup('VOTING COMPLETE',`${win?win.name:'One player'} has the highest vote. Waiting for Moderator to tally.`, 'var(--accent-green)',0);broadcastStateToAll();}}
     function updateStatus(msg, isSuccess = false) {
       const el = document.getElementById('connection-status');
@@ -1153,7 +1153,7 @@
           state.votes = {};
           state.isTie = false;
           state.announcement = "The game has started! Introduce yourselves and discuss.";
-          showBigPopup("DISCUSSION & VOTING TIME", "WHO DO YOU THINK IS THE MAFIA?", "var(--accent-blue)", 0);
+          showBigPopup("DISCUSSION & VOTING TIME", "WHO DO YOU THINK IS THE MAFIA? Discussion remains on screen until voting is complete.", "var(--accent-blue)", 0);
           startDiscussionTimer(60);
           broadcastStateToAll();
           scheduleDemoVotes();
@@ -1180,7 +1180,7 @@
                 state.announcement = `${target.name} was eliminated! Discuss and cast your votes.`;
                 showBigPopup("PLAYER ELIMINATED", `${target.name} was eliminated during the night.`, "var(--accent-red)", 10000);
                 clearTimeout(phasePopupTimer);
-                phasePopupTimer = setTimeout(() => showBigPopup("DISCUSSION & VOTING TIME", "WHO DO YOU THINK IS THE MAFIA?", "var(--accent-blue)", 0), 10000);
+                phasePopupTimer = setTimeout(() => showBigPopup("DISCUSSION & VOTING TIME", "WHO DO YOU THINK IS THE MAFIA? Discussion remains on screen until voting is complete.", "var(--accent-blue)", 0), 10000);
                 startDiscussionTimer(60);
               }
             }
@@ -1192,14 +1192,14 @@
               state.announcement = `The town woke up. No one was eliminated! Discuss and cast your votes.`;
               showBigPopup("DAY BREAK ☀️", `It's a peaceful morning. No one was eliminated.`, "var(--accent-blue)", 10000);
               clearTimeout(phasePopupTimer);
-              phasePopupTimer = setTimeout(() => showBigPopup("DISCUSSION & VOTING TIME", "WHO DO YOU THINK IS THE MAFIA?", "var(--accent-blue)", 0), 10000);
+              phasePopupTimer = setTimeout(() => showBigPopup("DISCUSSION & VOTING TIME", "WHO DO YOU THINK IS THE MAFIA? Discussion remains on screen until voting is complete.", "var(--accent-blue)", 0), 10000);
               startDiscussionTimer(60);
             }
           }
           broadcastStateToAll();
         } 
         else if(msg.action==='TALLY_VOTES'){
-          const voters=eligibleVoters();if(state.isTie||state.tieCandidates.length>1)return alert('Runoff voting is still active.');if(Object.keys(state.votes).length<voters.length||!state.pendingEliminationId)return alert(`Waiting for final result (${Object.keys(state.votes).length}/${voters.length}).`);hideBigPopup();const eliminated=state.players.find(p=>p.id===state.pendingEliminationId);if(!eliminated)return;eliminated.isAlive=false;state.announcement=`${eliminated.name} was eliminated by vote!`;showBigPopup('VOTED OUT',`${eliminated.name} has been banished! This message stays until the Night Phase begins.`,'var(--accent-yellow)',0);state.pendingEliminationId=null;state.tieCandidates=[];state.votingRound=1;if(!checkWinConditions()){state.phase='NIGHT_MAFIA';state.mafiaTarget=null;state.votes={};state.isTie=false;setTimeout(()=>showBigPopup('NIGHT TIME 🌙','The Mafia is making a secret move. This message stays until a target is selected.','var(--accent-purple)',0),4000);}broadcastStateToAll();
+          const voters=eligibleVoters();if(state.isTie||state.tieCandidates.length>1)return alert('Runoff voting is still active.');if(Object.keys(state.votes).length<voters.length||!state.pendingEliminationId)return alert(`Waiting for final result (${Object.keys(state.votes).length}/${voters.length}).`);hideBigPopup();const eliminated=state.players.find(p=>p.id===state.pendingEliminationId);if(!eliminated)return;eliminated.isAlive=false;state.announcement=`${eliminated.name} was eliminated by vote!`;showBigPopup('VOTED OUT',`${eliminated.name} has been banished! This message stays until the Night Phase begins.`,'var(--accent-yellow)',0);state.pendingEliminationId=null;state.tieCandidates=[];state.votingRound=1;if(!checkWinConditions()){state.phase='NIGHT_MAFIA';state.mafiaTarget=null;state.votes={};state.isTie=false;showBigPopup('NIGHT TIME 🌙','The Mafia is making a secret move. This message stays until a target is selected.','var(--accent-purple)',0);}broadcastStateToAll();
         }
       }
     }
