@@ -330,10 +330,11 @@
   </audio>
 
   <!-- PERSISTENT POPUP OVERLAY -->
-  <div id="big-popup" class="hidden">
-    <div class="popup-content">
+  <div id="big-popup" class="hidden" onclick="hideBigPopup()">
+    <div class="popup-content" onclick="event.stopPropagation()">
       <h1 id="popup-title">EVENT</h1>
       <p id="popup-subtitle">Detail goes here</p>
+      <button onclick="hideBigPopup()" class="btn-alt" style="margin-top: 1.5rem; width: auto; padding: 0.6rem 1.5rem; font-size: 0.95rem;">Dismiss</button>
     </div>
   </div>
 
@@ -436,7 +437,8 @@
       </div>
 
       <div id="mod-controls" style="display: flex; flex-direction: column; gap: 1rem;">
-        <button id="btn-start-game" onclick="startFirstDiscussion()">Start Game (Discussion Phase)</button>
+        <!-- UNIFIED NEXT STAGE BUTTON -->
+        <button id="btn-next-stage" class="btn-success" onclick="advanceNextStage()" style="font-size: 1.15rem; padding: 1.1rem;">▶️ Next Stage: Start Discussion</button>
         
         <div id="mod-timer-controls" class="hidden" style="display: flex; gap: 0.5rem;">
           <button onclick="startDiscussionTimer(60)" class="btn-alt">⏱️ 60s Timer</button>
@@ -444,13 +446,8 @@
           <button onclick="stopDiscussionTimer()" class="btn-danger">⏹️ Stop Timer</button>
         </div>
 
-        <button id="btn-start-night" class="hidden btn-purple" onclick="startMafiaTurn()">Next: Start Night Phase</button>
-        <button id="btn-end-night" class="hidden btn-success" onclick="startDiscussionPhase()">End Night & Wake Up Town</button>
-        
-        <button id="btn-tally-votes" class="hidden btn-danger" onclick="tallyVotes()">Tally Votes & Eliminate</button>
-        <button id="btn-skip-vote" class="hidden btn-alt" style="display:none!important" disabled aria-hidden="true">Skip Vote</button>
-
-        <button id="btn-rematch" class="hidden btn-purple" onclick="triggerRematch()">🔄 Play Again</button><button class="btn-purple" onclick="moderatorRestartGame()">🔄 Restart Game</button><button class="btn-danger" onclick="moderatorEndGame()">🛑 End Game</button>
+        <button class="btn-purple" onclick="moderatorRestartGame()">🔄 Restart Game</button>
+        <button class="btn-danger" onclick="moderatorEndGame()">🛑 End Game</button>
       </div>
 
       <h3 style="margin-top: 2rem;">Live Player & Vote Cards</h3>
@@ -506,7 +503,7 @@
     <!-- 5. ADMIN LOGIN SECTION -->
     <div id="view-admin-login" class="hidden" style="max-width: 400px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; justify-content: center; height: 100%;">
       <button class="btn-alt btn-home" onclick="goHome()">🏠 Back to Homepage</button>
-      <h2>ADMINISTRATOR LOGIN</h2>
+      2>ADMINISTRATOR LOGIN</h2>
       <div class="form-group">
         <label>Username:</label>
         <input type="text" id="admin-user-input" placeholder="Enter Username">
@@ -839,7 +836,7 @@
     }
 
     function goHome() {
-      isKickedOut = false; // Reset the kicked state
+      isKickedOut = false;
       
       if (peer) {
         try { peer.destroy(); } catch(e) {}
@@ -879,8 +876,9 @@
       updateStatus('Waiting for selection...');
     }
 
-    function showBigPopup(title, subtitle, color, duration = 5000) {
+    function showBigPopup(title, subtitle, color, duration = 0) {
       clearTimeout(popupTimer);
+      clearTimeout(phasePopupTimer);
       if (!isHost) return;
       const popup = document.getElementById('big-popup');
       const titleEl = document.getElementById('popup-title');
@@ -891,7 +889,7 @@
 
       popup.classList.remove('hidden');
       setTimeout(() => popup.classList.add('show'), 50);
-      if(duration>0) popupTimer=setTimeout(() => hideBigPopup(), duration);
+      if (duration > 0) popupTimer = setTimeout(() => hideBigPopup(), duration);
     }
 
     function hideBigPopup() {
@@ -911,13 +909,13 @@
         state.announcement = "All Mafia have been eliminated! THE TOWN WINS! 🎉";
         state.phase = 'GAME_OVER';
         stopDiscussionTimer();
-        showBigPopup("TOWN WINS!", `The Mafia was ${mafiaPlayer.name}!`, "var(--accent-green)", 0);
+        showBigPopup("TOWN WINS! 🎉", `The Mafia (${mafiaPlayer.name}) was eliminated!`, "var(--accent-green)", 0);
         return true;
       } else if (aliveMafia >= aliveTown) {
         state.announcement = `The Mafia (${mafiaPlayer.name}) outnumbers the Town! THE MAFIA WINS! 🦹‍♂️`;
         state.phase = 'GAME_OVER';
         stopDiscussionTimer();
-        showBigPopup("MAFIA WINS!", `${mafiaPlayer.name} was the Mafia!`, "var(--accent-red)", 0);
+        showBigPopup("MAFIA WINS! 🦹‍♂️", `${mafiaPlayer.name} was the Mafia and took over!`, "var(--accent-red)", 0);
         return true;
       }
       return false;
@@ -980,7 +978,6 @@
       }
     }
 
-    /* FIX: ADDED DELAY TO ENSURE MESSAGES FINISH SENDING BEFORE TEARDOWN */
     function regenerateHostCode() {
       const warning = 'Regenerating the room code will disconnect all players and reset the lobby. All joined players, moderator assignment, roles, votes, and the current game will be cleared. Continue?';
       if (!confirm(warning)) return;
@@ -997,7 +994,6 @@
         });
       }
 
-      // 1000ms delay guarantees the network queue has time to flush out the disconnect messages
       setTimeout(() => {
         clearHostState();
         state = { roomCode:'', phase:'LOBBY', players:[], moderatorId:null, mafiaId:null, mafiaTarget:null, votes:{}, isTie:false, announcement:'Waiting for players to join...', timer:0, timerActive:false, eliminantsChat:[], demoMode:false, tieCandidates:[], pendingEliminationId:null, votingRound:1 };
@@ -1091,7 +1087,7 @@
         state.mafiaTarget = msg.targetId;
         const targetPlayer = state.players.find(p => p.id === msg.targetId);
         state.announcement = targetPlayer ? `The MAFIA has selected a target!` : "The MAFIA has made a secret choice...";
-        showBigPopup("MAFIA MOVE COMPLETE", "The Mafia has selected a target. This message stays until the Moderator reveals the next stage.", "var(--accent-red)", 0);
+        showBigPopup("MAFIA MOVE COMPLETE 🌙", "The Mafia has selected a target. Click Next Stage on Moderator screen to reveal results.", "var(--accent-red)", 0);
         broadcastStateToAll();
       } 
       else if (msg.type === 'SUBMIT_VOTE') { handleVote(msg.voterId,msg.targetId); }
@@ -1154,7 +1150,7 @@
           state.votes = {};
           state.isTie = false;
           state.announcement = "The game has started! Introduce yourselves and discuss.";
-          showBigPopup("DISCUSSION & VOTING TIME", "WHO DO YOU THINK IS THE MAFIA? Discussion remains on screen until voting is complete.", "var(--accent-blue)", 0);
+          showBigPopup("DISCUSSION & VOTING TIME 🗣️", "WHO DO YOU THINK IS THE MAFIA? Cast your votes on your devices.", "var(--accent-blue)", 0);
           startDiscussionTimer(60);
           broadcastStateToAll();
           scheduleDemoVotes();
@@ -1166,7 +1162,7 @@
           state.votes = {};
           state.isTie = false;
           state.announcement = "NIGHT PHASE: The Mafia is choosing a target...";
-          showBigPopup("NIGHT TIME 🌙", "The Mafia is making a secret move. This message stays until a target is selected.", "var(--accent-purple)", 0);
+          showBigPopup("NIGHT TIME 🌙", "The Mafia is making a secret move. Close your eyes!", "var(--accent-purple)", 0);
           broadcastStateToAll();
         } 
         else if (msg.action === 'START_DISCUSSION') {
@@ -1179,9 +1175,7 @@
                 state.votes = {};
                 state.isTie = false;
                 state.announcement = `${target.name} was eliminated! Discuss and cast your votes.`;
-                showBigPopup("PLAYER ELIMINATED", `${target.name} was eliminated during the night.`, "var(--accent-red)", 10000);
-                clearTimeout(phasePopupTimer);
-                phasePopupTimer = setTimeout(() => showBigPopup("DISCUSSION & VOTING TIME", "WHO DO YOU THINK IS THE MAFIA? Discussion remains on screen until voting is complete.", "var(--accent-blue)", 0), 10000);
+                showBigPopup("PLAYER ELIMINATED ☠️", `${target.name} was eliminated during the night.`, "var(--accent-red)", 0);
                 startDiscussionTimer(60);
               }
             }
@@ -1191,9 +1185,7 @@
               state.votes = {};
               state.isTie = false;
               state.announcement = `The town woke up. No one was eliminated! Discuss and cast your votes.`;
-              showBigPopup("DAY BREAK ☀️", `It's a peaceful morning. No one was eliminated.`, "var(--accent-blue)", 10000);
-              clearTimeout(phasePopupTimer);
-              phasePopupTimer = setTimeout(() => showBigPopup("DISCUSSION & VOTING TIME", "WHO DO YOU THINK IS THE MAFIA? Discussion remains on screen until voting is complete.", "var(--accent-blue)", 0), 10000);
+              showBigPopup("DAY BREAK ☀️", `It's a peaceful morning. No one was eliminated.`, "var(--accent-blue)", 0);
               startDiscussionTimer(60);
             }
           }
@@ -1202,16 +1194,16 @@
         else if(msg.action==='TALLY_VOTES'){
           const voters = eligibleVoters();
           if (state.isTie || state.tieCandidates.length > 1) return alert('Runoff voting is still active.');
-          if (Object.keys(state.votes).length < voters.length || !state.pendingEliminationId) return alert(`Waiting for final result (${Object.keys(state.votes).length}/${voters.length}).`);
+          if (Object.keys(state.votes).length < voters.length || !state.pendingEliminationId) return alert(`Waiting for final votes (${Object.keys(state.votes).length}/${voters.length}).`);
           
-          hideBigPopup();
           const eliminated = state.players.find(p => p.id === state.pendingEliminationId);
           if (!eliminated) return;
           
           eliminated.isAlive = false;
           state.announcement = `${eliminated.name} was eliminated by vote!`;
           
-          showBigPopup('VOTED OUT', `${eliminated.name} has been banished! This message stays until the Moderator clicks Next.`, 'var(--accent-yellow)', 0);
+          // PERSISTENT VOTED OUT POPUP - Remains visible until manually dismissed or next stage is clicked
+          showBigPopup('VOTED OUT 🗳️', `${eliminated.name} has been banished from the town!`, 'var(--accent-yellow)', 0);
           
           state.pendingEliminationId = null;
           state.tieCandidates = [];
@@ -1294,7 +1286,6 @@
           }
         });
 
-        /* FIX: IF CONNECTION DROPS UNEXPECTEDLY, ALERT THE USER */
         hostConnection.on('close', () => {
           updateStatus('🔴 Disconnected from host server.');
           if (!isKickedOut && localPlayerId) {
@@ -1352,6 +1343,23 @@
 
       state.announcement = "Moderator assigned. Waiting for them to start the discussion...";
       broadcastStateToAll();
+    }
+
+    // UNIFIED ADVANCE NEXT STAGE CONTROLLER
+    function advanceNextStage() {
+      if (!hostConnection && !isHost) return alert("Connection lost.");
+      
+      if (state.phase === 'LOBBY') {
+        startFirstDiscussion();
+      } else if (state.phase === 'DAY_VOTING') {
+        tallyVotes();
+      } else if (state.phase === 'VOTE_REVEAL') {
+        startMafiaTurn();
+      } else if (state.phase === 'NIGHT_MAFIA') {
+        startDiscussionPhase();
+      } else if (state.phase === 'GAME_OVER') {
+        triggerRematch();
+      }
     }
 
     function startFirstDiscussion() {
@@ -1577,56 +1585,31 @@
         }
       }
 
-      const btnStartGame = document.getElementById('btn-start-game');
-      const btnEndNight = document.getElementById('btn-end-night');
-      const btnTallyVotes = document.getElementById('btn-tally-votes');
-      const btnSkipVote = document.getElementById('btn-skip-vote');
-      const btnRematch = document.getElementById('btn-rematch');
+      // UPDATE UNIFIED NEXT STAGE BUTTON LABEL & STYLES
+      const btnNextStage = document.getElementById('btn-next-stage');
       const modTimerControls = document.getElementById('mod-timer-controls');
-      const btnStartNight = document.getElementById('btn-start-night');
 
-      if (btnStartGame && btnEndNight && btnTallyVotes && btnSkipVote && btnRematch) {
-        btnRematch.classList.add('hidden');
-        if (btnStartNight) btnStartNight.classList.add('hidden');
-
-        if (state.phase === 'LOBBY' && state.moderatorId) {
-          btnStartGame.classList.remove('hidden');
-          btnEndNight.classList.add('hidden');
-          btnTallyVotes.classList.add('hidden');
-          btnSkipVote.classList.add('hidden');
-          modTimerControls.classList.add('hidden');
-        } else if (state.phase === 'VOTE_REVEAL') {
-          btnStartGame.classList.add('hidden');
-          btnEndNight.classList.add('hidden');
-          btnTallyVotes.classList.add('hidden');
-          btnSkipVote.classList.add('hidden');
-          modTimerControls.classList.add('hidden');
-          if (btnStartNight) btnStartNight.classList.remove('hidden');
-        } else if (state.phase === 'NIGHT_MAFIA') {
-          btnStartGame.classList.add('hidden');
-          btnEndNight.classList.remove('hidden');
-          btnTallyVotes.classList.add('hidden');
-          btnSkipVote.classList.add('hidden');
-          modTimerControls.classList.add('hidden');
+      if (btnNextStage) {
+        if (state.phase === 'LOBBY') {
+          btnNextStage.innerText = "▶️ Next Stage: Start Discussion";
+          btnNextStage.className = "btn-success";
+          if (modTimerControls) modTimerControls.classList.add('hidden');
         } else if (state.phase === 'DAY_VOTING') {
-          btnStartGame.classList.add('hidden');
-          btnEndNight.classList.add('hidden');
-          btnTallyVotes.classList.remove('hidden');
-          btnSkipVote.classList.add('hidden');
-          modTimerControls.classList.remove('hidden');
+          btnNextStage.innerText = "🗳️ Next Stage: Tally Votes & Reveal";
+          btnNextStage.className = "btn-danger";
+          if (modTimerControls) modTimerControls.classList.remove('hidden');
+        } else if (state.phase === 'VOTE_REVEAL') {
+          btnNextStage.innerText = "🌙 Next Stage: Start Night Phase";
+          btnNextStage.className = "btn-purple";
+          if (modTimerControls) modTimerControls.classList.add('hidden');
+        } else if (state.phase === 'NIGHT_MAFIA') {
+          btnNextStage.innerText = "☀️ Next Stage: Wake Up Town & End Night";
+          btnNextStage.className = "btn-success";
+          if (modTimerControls) modTimerControls.classList.add('hidden');
         } else if (state.phase === 'GAME_OVER') {
-          btnStartGame.classList.add('hidden');
-          btnEndNight.classList.add('hidden');
-          btnTallyVotes.classList.add('hidden');
-          btnSkipVote.classList.add('hidden');
-          modTimerControls.classList.add('hidden');
-          btnRematch.classList.remove('hidden');
-        } else {
-          btnStartGame.classList.add('hidden');
-          btnEndNight.classList.add('hidden');
-          btnTallyVotes.classList.add('hidden');
-          btnSkipVote.classList.add('hidden');
-          modTimerControls.classList.add('hidden');
+          btnNextStage.innerText = "🔄 Next Stage: Play Again (Rematch)";
+          btnNextStage.className = "btn-purple";
+          if (modTimerControls) modTimerControls.classList.add('hidden');
         }
       }
 
