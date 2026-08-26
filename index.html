@@ -444,6 +444,7 @@
           <button onclick="stopDiscussionTimer()" class="btn-danger">⏹️ Stop Timer</button>
         </div>
 
+        <button id="btn-start-night" class="hidden btn-purple" onclick="startMafiaTurn()">Next: Start Night Phase</button>
         <button id="btn-end-night" class="hidden btn-success" onclick="startDiscussionPhase()">End Night & Wake Up Town</button>
         
         <button id="btn-tally-votes" class="hidden btn-danger" onclick="tallyVotes()">Tally Votes & Eliminate</button>
@@ -1199,7 +1200,29 @@
           broadcastStateToAll();
         } 
         else if(msg.action==='TALLY_VOTES'){
-          const voters=eligibleVoters();if(state.isTie||state.tieCandidates.length>1)return alert('Runoff voting is still active.');if(Object.keys(state.votes).length<voters.length||!state.pendingEliminationId)return alert(`Waiting for final result (${Object.keys(state.votes).length}/${voters.length}).`);hideBigPopup();const eliminated=state.players.find(p=>p.id===state.pendingEliminationId);if(!eliminated)return;eliminated.isAlive=false;state.announcement=`${eliminated.name} was eliminated by vote!`;showBigPopup('VOTED OUT',`${eliminated.name} has been banished! This message stays until the Night Phase begins.`,'var(--accent-yellow)',0);state.pendingEliminationId=null;state.tieCandidates=[];state.votingRound=1;if(!checkWinConditions()){state.phase='NIGHT_MAFIA';state.mafiaTarget=null;state.votes={};state.isTie=false;showBigPopup('NIGHT TIME 🌙','The Mafia is making a secret move. This message stays until a target is selected.','var(--accent-purple)',0);}broadcastStateToAll();
+          const voters = eligibleVoters();
+          if (state.isTie || state.tieCandidates.length > 1) return alert('Runoff voting is still active.');
+          if (Object.keys(state.votes).length < voters.length || !state.pendingEliminationId) return alert(`Waiting for final result (${Object.keys(state.votes).length}/${voters.length}).`);
+          
+          hideBigPopup();
+          const eliminated = state.players.find(p => p.id === state.pendingEliminationId);
+          if (!eliminated) return;
+          
+          eliminated.isAlive = false;
+          state.announcement = `${eliminated.name} was eliminated by vote!`;
+          
+          showBigPopup('VOTED OUT', `${eliminated.name} has been banished! This message stays until the Moderator clicks Next.`, 'var(--accent-yellow)', 0);
+          
+          state.pendingEliminationId = null;
+          state.tieCandidates = [];
+          state.votingRound = 1;
+          
+          if (!checkWinConditions()) {
+            state.phase = 'VOTE_REVEAL'; 
+            state.votes = {};
+            state.isTie = false;
+          }
+          broadcastStateToAll();
         }
       }
     }
@@ -1392,6 +1415,7 @@
         case 'LOBBY': return 'Lobby Phase';
         case 'NIGHT_MAFIA': return 'Night Phase (Mafia Action)';
         case 'DAY_VOTING': return 'Day Phase (Discussion & Voting)';
+        case 'VOTE_REVEAL': return 'Day Phase (Vote Result)';
         case 'GAME_OVER': return 'Match Finished';
         default: return phase;
       }
@@ -1559,15 +1583,25 @@
       const btnSkipVote = document.getElementById('btn-skip-vote');
       const btnRematch = document.getElementById('btn-rematch');
       const modTimerControls = document.getElementById('mod-timer-controls');
+      const btnStartNight = document.getElementById('btn-start-night');
 
       if (btnStartGame && btnEndNight && btnTallyVotes && btnSkipVote && btnRematch) {
         btnRematch.classList.add('hidden');
+        if (btnStartNight) btnStartNight.classList.add('hidden');
+
         if (state.phase === 'LOBBY' && state.moderatorId) {
           btnStartGame.classList.remove('hidden');
           btnEndNight.classList.add('hidden');
           btnTallyVotes.classList.add('hidden');
           btnSkipVote.classList.add('hidden');
           modTimerControls.classList.add('hidden');
+        } else if (state.phase === 'VOTE_REVEAL') {
+          btnStartGame.classList.add('hidden');
+          btnEndNight.classList.add('hidden');
+          btnTallyVotes.classList.add('hidden');
+          btnSkipVote.classList.add('hidden');
+          modTimerControls.classList.add('hidden');
+          if (btnStartNight) btnStartNight.classList.remove('hidden');
         } else if (state.phase === 'NIGHT_MAFIA') {
           btnStartGame.classList.add('hidden');
           btnEndNight.classList.remove('hidden');
