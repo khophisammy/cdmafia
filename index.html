@@ -184,7 +184,6 @@
       padding-right: 0.3rem;
     }
     
-    /* Joined Players: smooth scrolling with the scrollbar fully hidden. */
     #screen-player-list {
       min-height: 8rem;
       max-height: clamp(12rem, 42vh, 24rem);
@@ -319,7 +318,13 @@
       }
     }
 
-    #privacy-cover{position:fixed;inset:0;z-index:20000;background:#05070b;color:#fff;display:none;align-items:center;justify-content:center;text-align:center;padding:2rem}#privacy-cover.show{display:flex}#privacy-cover .privacy-inner{max-width:28rem}#privacy-cover h2{color:#fff}.privacy-btn{margin:.75rem 0;background:#111827!important}.demo-panel{background:rgba(217,119,6,.08);border:2px solid rgba(217,119,6,.45);border-radius:14px;padding:1rem}.mafia-reveal{background:rgba(225,29,72,.1);border:2px solid var(--accent-red);color:var(--accent-red);border-radius:12px;padding:1rem;margin-top:.75rem;text-align:center;font-weight:800}
+    #privacy-cover{position:fixed;inset:0;z-index:20000;background:#05070b;color:#fff;display:none;align-items:center;justify-content:center;text-align:center;padding:2rem}
+    #privacy-cover.show{display:flex}
+    #privacy-cover .privacy-inner{max-width:28rem}
+    #privacy-cover h2{color:#fff}
+    .privacy-btn{margin:.75rem 0;background:#111827!important}
+    .demo-panel{background:rgba(217,119,6,.08);border:2px solid rgba(217,119,6,.45);border-radius:14px;padding:1rem}
+    .mafia-reveal{background:rgba(225,29,72,.1);border:2px solid var(--accent-red);color:var(--accent-red);border-radius:12px;padding:1rem;margin-top:.75rem;text-align:center;font-weight:800}
   </style>
 </head>
 <body>
@@ -338,7 +343,15 @@
     </div>
   </div>
 
-  <div id="privacy-cover" aria-hidden="true"><div class="privacy-inner"><h2>PRIVATE SCREEN</h2><p>Your game remains connected while this cover is showing.</p><button onclick="togglePrivacyCover(false)">Return to the game</button></div></div><div class="container">
+  <div id="privacy-cover" aria-hidden="true">
+    <div class="privacy-inner">
+      <h2>PRIVATE SCREEN</h2>
+      <p>Your game remains connected while this cover is showing.</p>
+      <button onclick="togglePrivacyCover(false)">Return to the game</button>
+    </div>
+  </div>
+
+  <div class="container">
     <div id="connection-status" class="status-bar">Waiting for selection...</div>
 
     <!-- 1. LANDING VIEW -->
@@ -483,13 +496,15 @@
           <span id="player-timer-display" class="timer-badge" style="font-size: 1.3rem; padding: 0.2rem 0.6rem;">01:00</span>
         </div>
 
-        <button class="privacy-btn" onclick="togglePrivacyCover(true)">🔒 Hide My Screen Without Disconnecting</button><div id="player-action-box" class="announcement">
+        <button class="privacy-btn" onclick="togglePrivacyCover(true)">🔒 Hide My Screen Without Disconnecting</button>
+        <div id="player-action-box" class="announcement">
           Waiting for the game to start...
         </div>
 
         <div id="player-interactive-options" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;"></div>
 
-        <div id="eliminated-mafia-reveal" class="mafia-reveal hidden"></div><div id="player-eliminants-chat" class="eliminants-chat-container hidden">
+        <div id="eliminated-mafia-reveal" class="mafia-reveal hidden"></div>
+        <div id="player-eliminants-chat" class="eliminants-chat-container hidden">
           <h3 style="font-size: 0.95rem; color: var(--accent-purple); text-align: left; margin-bottom: 0.25rem;">Eliminants Chat (Spectators Only)</h3>
           <div id="eliminants-messages-list" class="eliminants-chat-messages"></div>
           <div style="display: flex; gap: 0.5rem; margin-top: auto;">
@@ -503,7 +518,7 @@
     <!-- 5. ADMIN LOGIN SECTION -->
     <div id="view-admin-login" class="hidden" style="max-width: 400px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; justify-content: center; height: 100%;">
       <button class="btn-alt btn-home" onclick="goHome()">🏠 Back to Homepage</button>
-      2>ADMINISTRATOR LOGIN</h2>
+      <h2>ADMINISTRATOR LOGIN</h2>
       <div class="form-group">
         <label>Username:</label>
         <input type="text" id="admin-user-input" placeholder="Enter Username">
@@ -556,7 +571,16 @@
             <div style="display:flex;gap:.5rem;margin-top:.5rem;"><button onclick="copyTemporaryAdmin()" class="btn-alt">Copy</button><button onclick="revokeTemporaryAdmin()" class="btn-danger">Revoke</button></div>
           </div><p id="temp-admin-status" style="text-align:center;color:var(--text-muted);margin-top:.5rem;"></p>
         </div>
-        <div class="demo-panel"><h3 style="color:var(--accent-yellow)">Demo Testing Mode</h3><p style="text-align:center;color:var(--text-muted);margin-bottom:.75rem">Demo players automatically vote, including every runoff round.</p><select id="demo-player-count"><option value="4">4 demo players</option><option value="5" selected>5 demo players</option><option value="7">7 demo players</option><option value="9">9 demo players</option></select><button onclick="startDemoMode()" style="margin-top:.5rem;background:var(--accent-yellow)">🎮 Generate Demo Players</button><button onclick="removeDemoPlayers()" class="btn-alt" style="margin-top:.5rem">Remove Demo Players</button><p id="demo-status" style="text-align:center;margin-top:.5rem"></p></div><hr style="border:0;border-top:1px solid var(--card-item-border);margin:.5rem 0;"><h3>Global Emergency Actions</h3>
+        <div class="demo-panel">
+          <h3 style="color:var(--accent-yellow)">Demo Testing Mode</h3>
+          <p style="text-align:center;color:var(--text-muted);margin-bottom:.75rem">Demo players automatically vote, including every runoff round.</p>
+          <select id="demo-player-count"><option value="4">4 demo players</option><option value="5" selected>5 demo players</option><option value="7">7 demo players</option><option value="9">9 demo players</option></select>
+          <button onclick="startDemoMode()" style="margin-top:.5rem;background:var(--accent-yellow)">🎮 Generate Demo Players</button>
+          <button onclick="removeDemoPlayers()" class="btn-alt" style="margin-top:.5rem">Remove Demo Players</button>
+          <p id="demo-status" style="text-align:center;margin-top:.5rem"></p>
+        </div>
+        <hr style="border:0;border-top:1px solid var(--card-item-border);margin:.5rem 0;">
+        <h3>Global Emergency Actions</h3>
         <button onclick="forceEndGameFromScreen()" class="btn-danger" style="padding: 1rem;">🛑 Force End Game & Return Lobby</button>
       </div>
     </div>
@@ -660,8 +684,8 @@
         demoVoteTimers.set(key,timer);
       });
     }
-    function scheduleDemoMafia(){if(!state.demoMode||state.phase!=='NIGHT_MAFIA'||state.mafiaTarget)return;const m=state.players.find(p=>p.id===state.mafiaId);if(!m||!m.isDemo)return;setTimeout(()=>{if(state.phase!=='NIGHT_MAFIA'||state.mafiaTarget)return;const t=state.players.filter(p=>p.isAlive&&!p.isModerator&&!p.isMafia);if(t.length){state.mafiaTarget=t[Math.floor(Math.random()*t.length)].id;state.announcement='The Mafia has selected a target!';showBigPopup('MAFIA MOVE COMPLETE','The Mafia has selected a target. This message stays until the Moderator reveals the next stage.','var(--accent-red)',0);broadcastStateToAll();}},6000);}
-    function handleVote(voterId,targetId){const voter=eligibleVoters().find(p=>p.id===voterId);if(!voter||!voteTargets(voterId).some(p=>p.id===targetId))return;state.votes[voterId]=targetId;const voters=eligibleVoters();if(Object.keys(state.votes).length<voters.length){broadcastStateToAll();return;}const counts={};Object.values(state.votes).forEach(id=>counts[id]=(counts[id]||0)+1);const high=Math.max(...Object.values(counts));const leaders=Object.keys(counts).filter(id=>counts[id]===high);if(leaders.length>1){state.tieCandidates=leaders;state.pendingEliminationId=null;state.votes={};state.isTie=true;state.votingRound=(state.votingRound||1)+1;clearDemoVoteTimers();demoVoteGeneration++;const names=tieNames();state.announcement=`⚖️ TIE BETWEEN: ${names.join(' and ')}. Vote again between only these players.`;showBigPopup('TIE VOTE ⚖️',`Tie between: ${names.join(' and ')}. Everyone must vote again.`, 'var(--accent-yellow)',0);broadcastStateToAll();}else{state.tieCandidates=[];state.pendingEliminationId=leaders[0];state.isTie=false;const win=state.players.find(p=>p.id===leaders[0]);state.announcement=`Voting complete. ${win?win.name:'One player'} has the highest vote.`;showBigPopup('VOTING COMPLETE',`${win?win.name:'One player'} has the highest vote. Waiting for Moderator to tally.`, 'var(--accent-green)',0);broadcastStateToAll();}}
+    function scheduleDemoMafia(){if(!state.demoMode||state.phase!=='NIGHT_MAFIA'||state.mafiaTarget)return;const m=state.players.find(p=>p.id===state.mafiaId);if(!m||!m.isDemo)return;setTimeout(()=>{if(state.phase!=='NIGHT_MAFIA'||state.mafiaTarget)return;const t=state.players.filter(p=>p.isAlive&&!p.isModerator&&!p.isMafia);if(t.length){state.mafiaTarget=t[Math.floor(Math.random()*t.length)].id;state.announcement='The Mafia has selected a target!';broadcastStateToAll();}},6000);}
+    function handleVote(voterId,targetId){const voter=eligibleVoters().find(p=>p.id===voterId);if(!voter||!voteTargets(voterId).some(p=>p.id===targetId))return;state.votes[voterId]=targetId;const voters=eligibleVoters();if(Object.keys(state.votes).length<voters.length){broadcastStateToAll();return;}const counts={};Object.values(state.votes).forEach(id=>counts[id]=(counts[id]||0)+1);const high=Math.max(...Object.values(counts));const leaders=Object.keys(counts).filter(id=>counts[id]===high);if(leaders.length>1){state.tieCandidates=leaders;state.pendingEliminationId=null;state.votes={};state.isTie=true;state.votingRound=(state.votingRound||1)+1;clearDemoVoteTimers();demoVoteGeneration++;const names=tieNames();state.announcement=`⚖️ TIE BETWEEN: ${names.join(' and ')}. Vote again between only these players.`;showBigPopup('TIE VOTE ⚖️',`Tie between: ${names.join(' and ')}. Everyone must vote again.`, 'var(--accent-yellow)',0);broadcastStateToAll();}else{state.tieCandidates=[];state.pendingEliminationId=leaders[0];state.isTie=false;const win=state.players.find(p=>p.id===leaders[0]);state.announcement=`Voting complete. ${win?win.name:'One player'} has the highest vote. Click Next to tally.`;broadcastStateToAll();}}
     function updateStatus(msg, isSuccess = false) {
       const el = document.getElementById('connection-status');
       if (!el) return;
@@ -1087,7 +1111,6 @@
         state.mafiaTarget = msg.targetId;
         const targetPlayer = state.players.find(p => p.id === msg.targetId);
         state.announcement = targetPlayer ? `The MAFIA has selected a target!` : "The MAFIA has made a secret choice...";
-        showBigPopup("MAFIA MOVE COMPLETE 🌙", "The Mafia has selected a target. Click Next Stage on Moderator screen to reveal results.", "var(--accent-red)", 0);
         broadcastStateToAll();
       } 
       else if (msg.type === 'SUBMIT_VOTE') { handleVote(msg.voterId,msg.targetId); }
@@ -1166,24 +1189,26 @@
           broadcastStateToAll();
         } 
         else if (msg.action === 'START_DISCUSSION') {
+          stopDiscussionTimer();
+          state.phase = 'DAY_VOTING'; // Enter Discussion and Voting stage mode
+          state.votes = {};
+          state.isTie = false;
+          state.tieCandidates = [];
+
           if (state.mafiaTarget) {
             const target = state.players.find(p => p.id === state.mafiaTarget);
+            state.mafiaTarget = null;
             if (target) {
               target.isAlive = false;
               if (!checkWinConditions()) {
-                state.phase = 'DAY_VOTING';
-                state.votes = {};
-                state.isTie = false;
                 state.announcement = `${target.name} was eliminated! Discuss and cast your votes.`;
+                // POPUP TRIGGERED NOW THAT WE ARE IN DISCUSSION AND VOTING STAGE MODE
                 showBigPopup("PLAYER ELIMINATED ☠️", `${target.name} was eliminated during the night.`, "var(--accent-red)", 0);
                 startDiscussionTimer(60);
               }
             }
           } else {
             if (!checkWinConditions()) {
-              state.phase = 'DAY_VOTING';
-              state.votes = {};
-              state.isTie = false;
               state.announcement = `The town woke up. No one was eliminated! Discuss and cast your votes.`;
               showBigPopup("DAY BREAK ☀️", `It's a peaceful morning. No one was eliminated.`, "var(--accent-blue)", 0);
               startDiscussionTimer(60);
@@ -1202,9 +1227,6 @@
           eliminated.isAlive = false;
           state.announcement = `${eliminated.name} was eliminated by vote!`;
           
-          // PERSISTENT VOTED OUT POPUP - Remains visible until manually dismissed or next stage is clicked
-          showBigPopup('VOTED OUT 🗳️', `${eliminated.name} has been banished from the town!`, 'var(--accent-yellow)', 0);
-          
           state.pendingEliminationId = null;
           state.tieCandidates = [];
           state.votingRound = 1;
@@ -1213,6 +1235,8 @@
             state.phase = 'VOTE_REVEAL'; 
             state.votes = {};
             state.isTie = false;
+            // POPUP SHOWS ELIMINATION DETAILS FOR THE VOTED PLAYER
+            showBigPopup('VOTED OUT 🗳️', `${eliminated.name} has been banished from the town!`, 'var(--accent-yellow)', 0);
           }
           broadcastStateToAll();
         }
@@ -1603,7 +1627,7 @@
           btnNextStage.className = "btn-purple";
           if (modTimerControls) modTimerControls.classList.add('hidden');
         } else if (state.phase === 'NIGHT_MAFIA') {
-          btnNextStage.innerText = "☀️ Next Stage: Wake Up Town & End Night";
+          btnNextStage.innerText = "☀️ Next Stage: Wake Up Town & Enter Discussion";
           btnNextStage.className = "btn-success";
           if (modTimerControls) modTimerControls.classList.add('hidden');
         } else if (state.phase === 'GAME_OVER') {
