@@ -707,6 +707,14 @@
     function handleVote(voterId,targetId){
       const voter=eligibleVoters().find(p=>p.id===voterId);
       if(!voter||!voteTargets(voterId).some(p=>p.id===targetId))return;
+
+      // Allow players to deselect / toggle off their choice if clicking the same person
+      if (state.votes[voterId] === targetId) {
+        delete state.votes[voterId];
+        broadcastStateToAll();
+        return;
+      }
+
       state.votes[voterId]=targetId;
       const voters=eligibleVoters();
       if(Object.keys(state.votes).length<voters.length){
@@ -1169,10 +1177,17 @@
         broadcastStateToAll();
       } 
       else if (msg.type === 'MAFIA_TARGET') {
-        state.mafiaTarget = msg.targetId;
-        const targetPlayer = state.players.find(p => p.id === msg.targetId);
-        state.announcement = "Mafia has selected - please raise your head.";
-        showBigPopup("MAFIA HAS SELECTED", "Mafia has selected - please raise your head.", "var(--accent-green)", 0);
+        // Toggle/Deselect Mafia Target if selected again
+        if (state.mafiaTarget === msg.targetId) {
+          state.mafiaTarget = null;
+          state.announcement = "NIGHT MODE: Mafia is selecting...";
+          hideBigPopup();
+        } else {
+          state.mafiaTarget = msg.targetId;
+          const targetPlayer = state.players.find(p => p.id === msg.targetId);
+          state.announcement = "Mafia has selected - please raise your head.";
+          showBigPopup("MAFIA HAS SELECTED", "Mafia has selected - please raise your head.", "var(--accent-green)", 0);
+        }
         broadcastStateToAll();
       } 
       else if (msg.type === 'SUBMIT_VOTE') { handleVote(msg.voterId,msg.targetId); }
@@ -1730,7 +1745,17 @@
               playerActionBox.style.borderColor = '';
             } else if (state.phase === 'NIGHT_MAFIA') {
               if (localPlayer.isMafia) {
-                const selected=state.players.find(p=>p.id===state.mafiaTarget);playerActionBox.innerText=selected?`Selected: ${selected.name}. You may change your choice.`:'CHOOSE YOUR TARGET:';state.players.filter(p=>p.isAlive&&p.id!==localPlayer.id&&!p.isModerator).forEach(p=>{const b=document.createElement('button');b.className=state.mafiaTarget===p.id?'btn-success':'btn-danger';b.innerText=state.mafiaTarget===p.id?`✅ Selected: ${p.name}`:`Change to ${p.name}`;b.onclick=()=>submitMafiaTarget(p.id);playerInteractiveOptions.appendChild(b);});
+                const selected = state.players.find(p => p.id === state.mafiaTarget);
+                playerActionBox.innerText = selected ? `Selected: ${selected.name}. Tap again to deselect or pick someone else.` : 'CHOOSE YOUR TARGET:';
+                
+                state.players.filter(p => p.isAlive && p.id !== localPlayer.id && !p.isModerator).forEach(p => {
+                  const b = document.createElement('button');
+                  const isSelected = (state.mafiaTarget === p.id);
+                  b.className = isSelected ? 'btn-success' : 'btn-danger';
+                  b.innerText = isSelected ? `✅ Selected: ${p.name} (Click to deselect)` : `Target ${p.name}`;
+                  b.onclick = () => submitMafiaTarget(p.id);
+                  playerInteractiveOptions.appendChild(b);
+                });
               } else {
                 playerActionBox.innerText = "Night Mode active. Please close your eyes...";
                 playerActionBox.style.background = '';
@@ -1740,7 +1765,7 @@
             } else if (state.phase === 'DAY_VOTING') {
               if (state.votes[localPlayer.id]) {
                 const votedFor = state.players.find(p => p.id === state.votes[localPlayer.id]);
-                playerActionBox.innerText = `You voted for: ${votedFor ? votedFor.name : 'Unknown'}. You can change it below.`;
+                playerActionBox.innerText = `You voted for: ${votedFor ? votedFor.name : 'Unknown'}. Tap again to deselect or pick another player.`;
               } else {
                 playerActionBox.innerText = "Discussion and voting active! Cast your vote below:";
               }
@@ -1748,8 +1773,16 @@
               playerActionBox.style.color = 'var(--accent-blue)';
               playerActionBox.style.borderColor = 'var(--accent-blue)';
 
-              if((state.tieCandidates||[]).length>1)playerActionBox.innerText=`TIE VOTE: Vote between ${tieNames().join(' and ')}.`;
-              voteTargets(localPlayer.id).forEach(p=>{const btn=document.createElement('button');btn.className=state.votes[localPlayer.id]===p.id?'btn-danger':'btn-alt';btn.innerText=`Vote for ${p.name}`;btn.onclick=()=>submitVote(p.id);playerInteractiveOptions.appendChild(btn);});
+              if ((state.tieCandidates || []).length > 1) playerActionBox.innerText = `TIE VOTE: Vote between ${tieNames().join(' and ')}.`;
+              
+              voteTargets(localPlayer.id).forEach(p => {
+                const btn = document.createElement('button');
+                const isSelected = (state.votes[localPlayer.id] === p.id);
+                btn.className = isSelected ? 'btn-success' : 'btn-alt';
+                btn.innerText = isSelected ? `✅ Voted for ${p.name} (Click to deselect)` : `Vote for ${p.name}`;
+                btn.onclick = () => submitVote(p.id);
+                playerInteractiveOptions.appendChild(btn);
+              });
             } else {
               playerActionBox.innerText = state.announcement;
               playerActionBox.style.background = '';
