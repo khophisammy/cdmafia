@@ -1181,7 +1181,8 @@
         if (state.mafiaTarget === msg.targetId) {
           state.mafiaTarget = null;
           state.announcement = "NIGHT MODE: Mafia is selecting... Please close your eyes";
-          hideBigPopup();
+          showBigPopup("NIGHT MODE", "Mafia is selecting...","Please close your eyes", "var(--accent-purple)", 0);
+          broadcastStateToAll();
         } else {
           state.mafiaTarget = msg.targetId;
           const targetPlayer = state.players.find(p => p.id === msg.targetId);
