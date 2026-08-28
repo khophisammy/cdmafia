@@ -357,7 +357,7 @@
     <!-- 1. LANDING VIEW -->
     <div id="view-landing" style="display: flex; flex-direction: column; justify-content: center; flex: 1;">
       <h1>MAFIA</h1>
-      <p class="tagline">a game that shape our stories</p>
+      <p class="tagline">a game that shapes our stories</p>
       
       <div style="display: flex; flex-direction: column; gap: 1.25rem; max-width: 400px; margin: 0 auto; width: 100%;">
         <button onclick="switchRole('screen')" style="padding: 1.2rem; font-size: 1.1rem;">🖥️ Open Main Display (Host)</button>
@@ -698,7 +698,7 @@
           state.mafiaTarget = targetId;
           const targetPlayer = state.players.find(p => p.id === targetId);
           state.announcement = "Mafia has selected - please raise your head.";
-          showBigPopup("MAFIA HAS SELECTED", "Mafia has selected - please raise your head.", "var(--accent-green)", 0);
+          showBigPopup("MAFIA HAS SELECTED", "Mafia has selected - Please raise your head.", "var(--accent-green)", 0);
           broadcastStateToAll();
         }
       },3500);
@@ -797,8 +797,8 @@
     function toggleAudio() {
       const audio = document.getElementById('bg-music');
       const btn = document.getElementById('mute-btn');
-      if (audio.muted) { audio.muted = false; btn.innerText = '🔊 Mute Music'; } 
-      else { audio.muted = true; btn.innerText = '🔇 Unmute Music'; }
+      if (audio.muted) { audio.muted = false; btn.innerText = '🔊 Mute'; } 
+      else { audio.muted = true; btn.innerText = '🔇 Unmute'; }
     }
 
     function switchRole(role) {
@@ -1180,13 +1180,13 @@
         // Toggle/Deselect Mafia Target if selected again
         if (state.mafiaTarget === msg.targetId) {
           state.mafiaTarget = null;
-          state.announcement = "NIGHT MODE: Mafia is selecting...";
+          state.announcement = "NIGHT MODE: Mafia is selecting... Please close your eyes";
           hideBigPopup();
         } else {
           state.mafiaTarget = msg.targetId;
           const targetPlayer = state.players.find(p => p.id === msg.targetId);
-          state.announcement = "Mafia has selected - please raise your head.";
-          showBigPopup("MAFIA HAS SELECTED", "Mafia has selected - please raise your head.", "var(--accent-green)", 0);
+          state.announcement = "Mafia has selected - Please raise your head.";
+          showBigPopup("MAFIA HAS SELECTED", "Mafia has selected - Please raise your head.", "var(--accent-green)", 0);
         }
         broadcastStateToAll();
       } 
@@ -1233,7 +1233,7 @@
           state.votes = {};
           state.isTie = false;
           state.announcement = "Discussion and voting mode is active. Discuss and cast your votes!";
-          showBigPopup("DISCUSSION AND VOTING", "Discuss and cast your votes on your devices.", "var(--accent-blue)", 0);
+          showBigPopup("WHO DO YOU THINK IS THE MAFIA", "Discuss and cast your votes on your devices.", "var(--accent-blue)", 0);
           startDiscussionTimer(60);
           broadcastStateToAll();
           scheduleDemoVotes();
@@ -1245,7 +1245,7 @@
           state.votes = {};
           state.isTie = false;
           state.announcement = "NIGHT MODE: Mafia is selecting...";
-          showBigPopup("NIGHT MODE", "Mafia is selecting...", "var(--accent-purple)", 0);
+          showBigPopup("NIGHT MODE", "Mafia is selecting...","Please close your eyes", "var(--accent-purple)", 0);
           broadcastStateToAll();
         } 
         else if (msg.action === 'REVEAL_NIGHT_ELIMINATION') {
